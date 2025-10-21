@@ -1,0 +1,129 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #111;
+  color: #fff;
+  scroll-behavior: smooth;
+}
+
+/* ===== HEADER ===== */
+header {
+  background: #000;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+}
+
+header h1 {
+  font-size: 1.5rem;
+  color: #ffc107;
+  font-weight: 700;
+  margin: 0;
+}
+
+#logo {
+  height: 60px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+nav a {
+  color: #ffc107;
+  margin-left: 15px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #e6b007;
+}
+
+/* ===== MAIN ===== */
+main {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+
+h2 {
+  color: #ffc107;
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ffc107;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+/* ===== SPONSORS ===== */
+.sponsors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.sponsor {
+  background: #222;
+  border-radius: 12px;
+  padding: 20px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgb(255 193 7 / 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sponsor:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgb(255 193 7 / 0.7);
+}
+
+/* ===== IMAGEM DO PATROCINADOR ===== */
+.sponsor img {
+  width: 100%;
+  height: 230px; /* aumentei a altura */
+  object-fit: cover; /* cobre toda a área, sem cortar demais */
+  background: #fffdf5; /* branco quente, mais visível */
+  border-radius: 10px;
+  border: 2px solid #ffc107;
+  margin-bottom: 12px;
+  box-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border 0.4s ease;
+}
+.sponsor:hover img {
+  transform: scale(1.05);
+}
+
+.sponsor h3 {
+  margin: 0 0 8px;
+  color: #ffc107;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.sponsor p {
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 600px) {
+  .sponsor {
+    width: 90%;
+  }
+  .sponsor img {
+    height: 160px;
+  }
+}
