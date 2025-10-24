@@ -8,6 +8,24 @@
   margin-top: 10px;
 }
 
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
 /* Grupo de botões estilizados */
 .radio-group.styled {
   display: flex;
