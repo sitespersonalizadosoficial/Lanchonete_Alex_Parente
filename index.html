@@ -1430,16 +1430,26 @@
     <!-- Forma de Pagamento -->
     <h3>Forma de Pagamento</h3>
     <div class="radio-group">
-      <label><input type="radio" name="payment" value="Cartão" onchange="toggleFields()"> Cartão</label>
-      <label><input type="radio" name="payment" value="dinheiro" onchange="toggleFields()"> Dinheiro</label>
-      <label><input type="radio" name="payment" value="pix" onchange="toggleFields()"> Pix</label>
+      <label>
+        <input type="radio" name="payment" value="Cartão" onchange="toggleFields()"> Cartão
+      </label>
+      <label>
+        <input type="radio" name="payment" value="dinheiro" onchange="toggleFields()"> Dinheiro
+      </label>
+      <label>
+        <input type="radio" name="payment" value="pix" onchange="toggleFields()"> Pix
+      </label>
     </div>
 
     <!-- Retirada -->
     <h3>Retirada</h3>
     <div class="radio-group">
-      <label><input type="radio" name="pickup" value="balcão" onchange="toggleFields()"> No Balcão</label>
-      <label><input type="radio" name="pickup" value="delivery" onchange="toggleFields()"> Delivery</label>
+      <label>
+        <input type="radio" name="pickup" value="balcão" onchange="toggleFields()"> No Balcão
+      </label>
+      <label>
+        <input type="radio" name="pickup" value="delivery" onchange="toggleFields()"> Delivery
+      </label>
     </div>
 
     <!-- Endereço para entrega -->
@@ -1454,6 +1464,10 @@
       <input type="text" id="troco" placeholder="Ex: 100,00">
     </div>
 
+    <!-- Mensagem de erro -->
+    <div id="checkout-error" class="error-message" style="display: none;"></div>
+
+    <!-- Botão de finalização -->
     <button id="checkout-btn" class="btn-add">Finalizar Pedido</button>
   </div>
 </div>
