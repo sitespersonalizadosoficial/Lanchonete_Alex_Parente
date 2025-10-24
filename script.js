@@ -10,6 +10,7 @@ const deliveryAddress = document.getElementById('delivery-address');
 const addressInput = document.getElementById('address');
 const trocoContainer = document.getElementById('troco-container');
 const trocoInput = document.getElementById('troco');
+const checkoutError = document.getElementById('checkout-error'); // novo
 
 // ===== CARRINHO =====
 let cart = [];
@@ -59,7 +60,7 @@ function updateCart() {
     btn.addEventListener('click', e => {
       const i = e.target.getAttribute('data-index');
       if (cart[i].name === 'Taxa de entrega') {
-        document.querySelector('input[name="pickup"][value="balcao"]').checked = true;
+        document.querySelector('input[name="pickup"][value="balcão"]').checked = true;
         deliveryFeeAdded = false;
       }
       cart.splice(i, 1);
@@ -80,7 +81,7 @@ document.querySelector('.scroll-btn.right')?.addEventListener('click', () => {
 // ===== ADICIONAR PRODUTOS =====
 document.querySelectorAll('.btn-add').forEach(btn => {
   btn.addEventListener('click', e => {
-    e.stopPropagation(); // impede clique em elementos filhos dentro do botão
+    e.stopPropagation();
     const card = e.currentTarget.closest('.card');
     if (!card) return;
 
@@ -88,10 +89,8 @@ document.querySelectorAll('.btn-add').forEach(btn => {
     const variation = e.currentTarget.dataset.name?.trim() || '';
     const price = parseFloat(e.currentTarget.dataset.price || card.dataset.price || 0);
 
-    // 🚫 Ignora produtos sem preço (elimina "Produto R$ 0,00")
     if (!price || price <= 0) return;
 
-    // ✅ Monta nome corretamente
     let name;
     if (!variation) {
       name = baseName;
@@ -101,7 +100,6 @@ document.querySelectorAll('.btn-add').forEach(btn => {
       name = `${baseName} (${variation})`;
     }
 
-    // 🚫 Evita duplicação de cliques rápidos no mesmo item
     const lastItem = cart[cart.length - 1];
     if (lastItem && lastItem.name === name && lastItem.price === price) return;
 
@@ -141,15 +139,37 @@ function toggleFields() {
   }
 }
 
+// ===== FUNÇÃO PARA MOSTRAR ERROS BONITOS =====
+function showError(msg) {
+  if (!checkoutError) return;
+  checkoutError.textContent = msg;
+  checkoutError.style.display = 'block';
+  checkoutError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    checkoutError.style.display = 'none';
+  }, 4000); // esconde após 4s
+}
+
 // ===== FINALIZAR PEDIDO VIA WHATSAPP =====
 checkoutBtn?.addEventListener('click', () => {
   if (cart.length === 0) {
-    alert('Seu carrinho está vazio!');
+    showError('Seu carrinho está vazio!');
     return;
   }
 
   const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
   const pickup = document.querySelector('input[name="pickup"]:checked')?.value || '';
+
+  if (!pickup) {
+    showError('Selecione se o pedido será retirado no balcão ou por delivery.');
+    return;
+  }
+
+  if (!payment) {
+    showError('Selecione a forma de pagamento.');
+    return;
+  }
+
   const troco = trocoInput?.value.trim() || '';
   const endereco = addressInput?.value.trim() || '';
 
@@ -160,8 +180,8 @@ checkoutBtn?.addEventListener('click', () => {
 
   const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
   message += `Total: R$ ${total.toFixed(2)}%0A`;
-  message += `Pagamento: ${payment || '-'}%0A`;
-  message += `Retirada: ${pickup || '-'}%0A`;
+  message += `Pagamento: ${payment}%0A`;
+  message += `Retirada: ${pickup}%0A`;
 
   if (pickup === 'delivery') message += `Endereço: ${endereco || '-'}%0A`;
   if (payment === 'dinheiro' && troco) message += `Precisa de troco para: R$ ${troco}%0A`;
