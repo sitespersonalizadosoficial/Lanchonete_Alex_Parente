@@ -10,7 +10,7 @@ const deliveryAddress = document.getElementById('delivery-address');
 const addressInput = document.getElementById('address');
 const trocoContainer = document.getElementById('troco-container');
 const trocoInput = document.getElementById('troco');
-const checkoutError = document.getElementById('checkout-error'); // novo
+const checkoutError = document.getElementById('checkout-error');
 
 // ===== CARRINHO =====
 let cart = [];
@@ -150,7 +150,7 @@ function showError(msg) {
   }, 4000); // esconde após 4s
 }
 
-// ===== FINALIZAR PEDIDO VIA WHATSAPP =====
+// ===== FINALIZAR PEDIDO VIA WHATSAPP (MODIFICADO COM O CUPOM) =====
 checkoutBtn?.addEventListener('click', () => {
   if (cart.length === 0) {
     showError('Seu carrinho está vazio!');
@@ -173,20 +173,50 @@ checkoutBtn?.addEventListener('click', () => {
   const troco = trocoInput?.value.trim() || '';
   const endereco = addressInput?.value.trim() || '';
 
-  let message = 'Olá, gostaria de fazer o pedido:%0A';
+  // Cria a mensagem para o WhatsApp em texto puro
+  let plainMessage = 'Olá, gostaria de fazer o pedido:\n\n';
+  
+  // Cria uma variável separada só com os itens formatados para o cupom de impressão
+  let itensParaCupom = ''; 
+
   cart.forEach(item => {
-    message += `- ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}%0A`;
+    const linhaItem = `- ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}`;
+    plainMessage += `${linhaItem}\n`;
+    itensParaCupom += `${linhaItem}\n`;
   });
 
   const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
-  message += `Total: R$ ${total.toFixed(2)}%0A`;
-  message += `Pagamento: ${payment}%0A`;
-  message += `Retirada: ${pickup}%0A`;
+  plainMessage += `\nTotal: R$ ${total.toFixed(2)}\n`;
+  plainMessage += `Pagamento: ${payment}\n`;
+  plainMessage += `Retirada: ${pickup}\n`;
 
-  if (pickup === 'delivery') message += `Endereço: ${endereco || '-'}%0A`;
-  if (payment === 'dinheiro' && troco) message += `Precisa de troco para: R$ ${troco}%0A`;
+  // Adiciona endereço e troco na mensagem do WhatsApp e também no Cupom de Impressão
+  if (pickup === 'delivery') {
+      plainMessage += `Endereço: ${endereco || '-'}\n`;
+      itensParaCupom += `\nEndereço: ${endereco || '-'}`;
+  }
+  if (payment === 'dinheiro' && troco) {
+      plainMessage += `Precisa de troco para: R$ ${troco}\n`;
+      itensParaCupom += `\nTroco p/: R$ ${troco}`;
+  }
 
-  window.open(`https://wa.me/5517992800946?text=${message}`, '_blank');
+  // --- INÍCIO DA GERAÇÃO DO LINK DO CUPOM ---
+  let urlBase = window.location.href.split('?')[0]; 
+  urlBase = urlBase.substring(0, urlBase.lastIndexOf('/'));
+  if (!urlBase) urlBase = window.location.origin;
+
+  // Como o seu código não tem um campo de nome de cliente, deixei como 'Não informado'
+  // Se você adicionar um input de nome depois, basta trocar aqui
+  const nomeCliente = 'Não informado'; 
+
+  const linkCupom = `${urlBase}/cupom.html?cliente=${encodeURIComponent(nomeCliente)}&itens=${encodeURIComponent(itensParaCupom)}&total=${encodeURIComponent(total.toFixed(2))}`;
+  
+  // Adiciona o link mágico no final da mensagem do WhatsApp
+  plainMessage += `\n🖨️ *Para imprimir o cupom, clique no link abaixo:*\n${linkCupom}`;
+  // --- FIM DA GERAÇÃO DO LINK DO CUPOM ---
+
+  // Codifica a mensagem final e abre o WhatsApp
+  window.open(`https://wa.me/5517992800946?text=${encodeURIComponent(plainMessage)}`, '_blank');
 });
 
 // ===== MENU FIXO E SCROLL SUAVE =====
