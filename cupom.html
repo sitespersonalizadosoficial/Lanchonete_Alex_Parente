@@ -5,49 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cupom de Impressão</title>
     <style>
+        /* Reset geral */
+        * { box-sizing: border-box; }
+        
         body {
             font-family: 'Courier New', Courier, monospace;
-            width: 300px; 
+            width: 100%;
+            max-width: 350px;
             margin: 0 auto;
             color: #000;
             background: #fff;
-            font-size: 14px;
+            font-size: 18px; /* Letra maior no geral */
+            padding: 5px;
         }
         .header {
             text-align: center;
-            border-bottom: 1px dashed #000;
+            border-bottom: 2px dashed #000;
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
-        .header h2 { margin: 0; font-size: 18px; }
-        .header p { margin: 5px 0 0 0; font-size: 12px; }
-        .info { margin-bottom: 15px; }
+        .header h2 { margin: 0; font-size: 26px; font-weight: bold; }
+        .header p { margin: 5px 0 0 0; font-size: 16px; font-weight: bold; }
+        
+        .info { margin-bottom: 15px; font-size: 18px; }
         .info p { margin: 5px 0; }
         
         #txt-itens { 
             white-space: pre-wrap; 
             display: block; 
-            margin-top: 5px; 
+            margin-top: 8px; 
+            font-size: 20px; /* Itens maiores e em negrito para facilitar a leitura na cozinha */
+            font-weight: bold; 
         }
         
         .total {
-            font-size: 16px;
+            font-size: 24px; /* Total bem destacado */
             font-weight: bold;
-            border-top: 1px dashed #000;
+            border-top: 2px dashed #000;
             padding-top: 10px;
             text-align: right;
         }
         .footer {
             text-align: center;
             margin-top: 20px;
-            font-size: 12px;
-            border-top: 1px dashed #000;
+            font-size: 16px;
+            border-top: 2px dashed #000;
             padding-top: 10px;
+            font-weight: bold;
         }
 
+        /* Regras estritas SÓ para a hora que a impressora puxar */
         @media print {
-            @page { margin: 0; } 
-            body { margin: 0.5cm; width: auto; }
+            @page { 
+                margin: 0; 
+            } 
+            body { 
+                margin: 0; 
+                padding: 0;
+                width: 100%; 
+                max-width: 100%;
+            }
         }
     </style>
 </head>
