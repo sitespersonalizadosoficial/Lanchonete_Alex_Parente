@@ -6,7 +6,7 @@ const cartItems = document.getElementById('cart-items');
 const cartCount = document.getElementById('cart-count');
 const mainContent = document.querySelector('main');
 const checkoutBtn = document.getElementById('checkout-btn');
-const clientNameInput = document.getElementById('client-name'); 
+const clientNameInput = document.getElementById('client-name'); // NOVO: Nome do Cliente
 const deliveryAddress = document.getElementById('delivery-address');
 const addressInput = document.getElementById('address');
 const trocoContainer = document.getElementById('troco-container');
@@ -18,14 +18,9 @@ let cart = [];
 let deliveryFeeAdded = false;
 let garantiuDesconto = false; // Memória para o desconto
 
-// LISTA DE PALAVRAS-CHAVE PARA IDENTIFICAR BEBIDAS (Não recebem desconto)
-const bebidasKeywords = [
-  "Skol", "Bohemia", "Brahma", "Original", "Spaten", "Heineken", 
-  "Chopp", "Coca-Cola", "Antarctica", "Sprite", "Fanta", 
-  "Suco", "Del Valle", "2L", "600ml", "Long Neck", "Refrigerante"
-];
+// LISTA DE PALAVRAS PARA IDENTIFICAR BEBIDAS (Não recebem desconto)
+const bebidasKeywords = ["Skol", "Bohemia", "Brahma", "Original", "Spaten", "Heineken", "Chopp", "Coca-Cola", "Antarctica", "Sprite", "Fanta", "Suco", "Del Valle", "2L", "600ml", "Long Neck", "Refrigerante"];
 
-// Abrir/Fechar Carrinho
 cartIcon?.addEventListener('click', () => {
   cartPanel.classList.toggle('open');
   cartPanel.setAttribute('aria-hidden', !cartPanel.classList.contains('open'));
@@ -34,7 +29,6 @@ cartIcon?.addEventListener('click', () => {
 
 cartClose?.addEventListener('click', () => cartIcon.click());
 
-// ===== ATUALIZAR CARRINHO =====
 function updateCart() {
   cartItems.innerHTML = '';
 
@@ -54,10 +48,10 @@ function updateCart() {
     const precoItem = parseFloat(item.price);
     subtotal += precoItem;
     
-    // Verifica se o item é uma bebida pelo nome
+    // Verifica se é bebida
     const eBebida = bebidasKeywords.some(k => item.name.toLowerCase().includes(k.toLowerCase()));
 
-    // Se NÃO for bebida e NÃO for a taxa de entrega, entra na conta do desconto
+    // Se NÃO for bebida e NÃO for taxa, entra no cálculo do desconto
     if (!eBebida && item.name !== 'Taxa de entrega') {
         valorParaDesconto += precoItem;
     }
@@ -72,17 +66,17 @@ function updateCart() {
     cartItems.appendChild(div);
   });
 
-  // --- MATEMÁTICA DO DESCONTO ---
+  // --- MATEMÁTICA AUTOMÁTICA DO CARRINHO ---
   let total = subtotal;
   let htmlDesconto = '';
 
   if (garantiuDesconto && valorParaDesconto > 0) {
-    const valorDesconto = valorParaDesconto * 0.10; // 10% apenas sobre lanches/porções
+    const valorDesconto = valorParaDesconto * 0.10; // 10% só sobre lanches
     total = subtotal - valorDesconto; 
     
     htmlDesconto = `
-      <div style="color: #28a745; font-size: 15px; margin-top: 5px;">
-        Desconto (10% exceto bebidas): - R$ ${valorDesconto.toFixed(2)}
+      <div style="color: #28a745; font-size: 16px; margin-top: 5px;">
+        Desconto (10% s/ Lanches): - R$ ${valorDesconto.toFixed(2)}
       </div>
     `;
   }
@@ -100,13 +94,11 @@ function updateCart() {
   
   cartItems.appendChild(totalDiv);
 
-  // Evento de remover item
   document.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', e => {
       const i = e.target.getAttribute('data-index');
       if (cart[i].name === 'Taxa de entrega') {
-        const radioBalcao = document.querySelector('input[name=\"pickup\"][value=\"balcão\"]');
-        if(radioBalcao) radioBalcao.checked = true;
+        document.querySelector('input[name="pickup"][value="balcão"]').checked = true;
         deliveryFeeAdded = false;
       }
       cart.splice(i, 1);
@@ -115,7 +107,7 @@ function updateCart() {
   });
 }
 
-// ===== SCROLL DO MENU =====
+// ===== SCROLL HORIZONTAL DO MENU =====
 const scrollContainer = document.querySelector('.menu-scroll');
 document.querySelector('.scroll-btn.left')?.addEventListener('click', () => {
   scrollContainer.scrollBy({ left: -150, behavior: 'smooth' });
@@ -137,9 +129,8 @@ document.querySelectorAll('.btn-add').forEach(btn => {
 
     if (!price || price <= 0) return;
 
-    let name = variation ? `${baseName} (${variation})` : baseName;
+    let name = variation ? (variation.toLowerCase().includes(baseName.toLowerCase()) ? variation : `${baseName} (${variation})`) : baseName;
 
-    // Evita duplicados rápidos
     const lastItem = cart[cart.length - 1];
     if (lastItem && lastItem.name === name && lastItem.price === price) return;
 
@@ -151,13 +142,17 @@ document.querySelectorAll('.btn-add').forEach(btn => {
   });
 });
 
-// ===== ENTREGA E PAGAMENTO =====
-document.querySelectorAll('input[name=\"pickup\"]').forEach(radio => radio.addEventListener('change', toggleFields));
-document.querySelectorAll('input[name=\"payment\"]').forEach(radio => radio.addEventListener('change', toggleFields));
+// ===== CAMPOS DE ENTREGA E PAGAMENTO =====
+document.querySelectorAll('input[name="pickup"]').forEach(radio => {
+  radio.addEventListener('change', toggleFields);
+});
+document.querySelectorAll('input[name="payment"]').forEach(radio => {
+  radio.addEventListener('change', toggleFields);
+});
 
 function toggleFields() {
-  const pickup = document.querySelector('input[name=\"pickup\"]:checked')?.value || '';
-  const payment = document.querySelector('input[name=\"payment\"]:checked')?.value || '';
+  const pickup = document.querySelector('input[name="pickup"]:checked')?.value || '';
+  const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
 
   if (deliveryAddress) deliveryAddress.style.display = pickup === 'delivery' ? 'block' : 'none';
   if (trocoContainer) trocoContainer.style.display = payment === 'dinheiro' ? 'block' : 'none';
@@ -166,9 +161,11 @@ function toggleFields() {
 
   if (pickup === 'delivery' && deliveryFeeIndex === -1) {
     cart.push({ name: 'Taxa de entrega', price: 4.00 });
+    deliveryFeeAdded = true;
     updateCart();
   } else if (pickup !== 'delivery' && deliveryFeeIndex !== -1) {
     cart.splice(deliveryFeeIndex, 1);
+    deliveryFeeAdded = false;
     updateCart();
   }
 }
@@ -181,20 +178,29 @@ function showError(msg) {
   setTimeout(() => { checkoutError.style.display = 'none'; }, 4000);
 }
 
-// ===== FINALIZAR PEDIDO NO WHATSAPP =====
+// ===== FINALIZAR PEDIDO VIA WHATSAPP =====
 checkoutBtn?.addEventListener('click', () => {
   const nomeCliente = clientNameInput?.value.trim();
-  if (!nomeCliente) { showError('Por favor, digite seu nome antes de finalizar.'); clientNameInput.focus(); return; }
+  if (!nomeCliente) { showError('Por favor, digite seu nome.'); clientNameInput.focus(); return; }
   if (cart.length === 0) { showError('Seu carrinho está vazio!'); return; }
 
-  const payment = document.querySelector('input[name=\"payment\"]:checked')?.value || '';
-  const pickup = document.querySelector('input[name=\"pickup\"]:checked')?.value || '';
+  const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
+  const pickup = document.querySelector('input[name="pickup"]:checked')?.value || '';
   if (!pickup || !payment) { showError('Selecione a forma de entrega e pagamento.'); return; }
 
   const troco = trocoInput?.value.trim() || '';
-  const endereco = addressInput?.value.trim() || '';
+  const endereco = addressInput?.value.trim() || 'Não informado';
 
-  // Cálculo de valores (Mesma lógica do Carrinho)
+  let plainMessage = `*NOVO PEDIDO - ${nomeCliente}*\n\n`;
+  let itensParaCupom = ''; 
+
+  cart.forEach(item => {
+    const linhaItem = `- ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}`;
+    plainMessage += `${linhaItem}\n`;
+    itensParaCupom += `${linhaItem}\n`;
+  });
+
+  // Matemática dos Valores Finais (Recalculando para garantir precisão no WhatsApp)
   let subtotal = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
   let valorParaDesconto = cart.reduce((sum, item) => {
     const eBebida = bebidasKeywords.some(k => item.name.toLowerCase().includes(k.toLowerCase()));
@@ -202,74 +208,76 @@ checkoutBtn?.addEventListener('click', () => {
   }, 0);
 
   let total = subtotal;
-  let txtDesconto = "";
   if (garantiuDesconto && valorParaDesconto > 0) {
-    const desc = valorParaDesconto * 0.10;
-    total = subtotal - desc;
-    txtDesconto = `\nSubtotal: R$ ${subtotal.toFixed(2)}\nDesconto (Exceto Bebidas): - R$ ${desc.toFixed(2)}`;
+    const desconto = valorParaDesconto * 0.10;
+    total = subtotal - desconto;
+    plainMessage += `\nSubtotal: R$ ${subtotal.toFixed(2)}\nDesconto (10% s/ Lanches): - R$ ${desconto.toFixed(2)}`;
   }
 
-  // Montagem da Mensagem
-  let msg = `*NOVO PEDIDO - ${nomeCliente}*\n\n`;
-  let itensCupom = "";
-  cart.forEach(item => {
-    const linha = `- ${item.name}: R$ ${parseFloat(item.price).toFixed(2)}`;
-    msg += linha + "\n";
-    itensCupom += linha + "\n";
-  });
+  plainMessage += `\n*Total Final: R$ ${total.toFixed(2)}*\n\n`;
+  plainMessage += `👤 Cliente: ${nomeCliente}\n💳 Pagamento: ${payment}\n📍 Retirada: ${pickup}\n`;
 
-  msg += `${txtDesconto}\n*Total Final: R$ ${total.toFixed(2)}*\n\n`;
-  msg += `👤 Cliente: ${nomeCliente}\n💳 Pagamento: ${payment}\n📍 Retirada: ${pickup}`;
-  if (pickup === 'delivery') msg += `\n🏠 Endereço: ${endereco || '-'}`;
+  if (pickup === 'delivery') {
+      plainMessage += `🏠 Endereço: ${endereco}\n`;
+      itensParaCupom += `\nEndereço: ${endereco}`;
+  }
   
   if (payment === 'dinheiro' && troco) {
-      let vTroco = parseFloat(troco.replace(',', '.'));
-      if (!isNaN(vTroco) && vTroco > total) {
-          msg += `\n💵 Troco para R$ ${vTroco.toFixed(2)} (Levar R$ ${(vTroco - total).toFixed(2)})`;
+      let valorTrocoDigitado = parseFloat(troco.replace(',', '.'));
+      if (!isNaN(valorTrocoDigitado) && valorTrocoDigitado > total) {
+          let trocoReal = valorTrocoDigitado - total;
+          plainMessage += `💵 Troco p/: R$ ${valorTrocoDigitado.toFixed(2)} \n*(Motoboy, LEVAR R$ ${trocoReal.toFixed(2)} DE TROCO)*\n`;
+      } else {
+          plainMessage += `💵 Troco p/: ${troco}\n`;
       }
   }
 
-  if (garantiuDesconto) msg += `\n✅ *PEDIDO COM DESCONTO DO SITE!*`;
+  if (garantiuDesconto) plainMessage += `\n✅ *ESTE PEDIDO FOI FEITO PELO SITE E GARANTIU O DESCONTO!*`;
 
-  // Link do Cupão
-  const urlCupom = new URL('cupom.html', window.location.href).href;
-  const link = `${urlCupom}?cliente=${encodeURIComponent(nomeCliente)}&itens=${encodeURIComponent(itensCupom)}&total=${encodeURIComponent(total.toFixed(2))}`;
-  msg += `\n\n🖨️ *Imprimir Cupom:* \n${link}`;
+  // GERAÇÃO DO LINK DO CUPOM COM ENDEREÇO
+  const urlBase = new URL('cupom.html', window.location.href).href;
+  const linkCupom = `${urlBase}?cliente=${encodeURIComponent(nomeCliente)}&itens=${encodeURIComponent(itensParaCupom)}&total=${encodeURIComponent(total.toFixed(2))}&endereco=${encodeURIComponent(endereco)}`;
+  
+  plainMessage += `\n\n🖨️ *Para imprimir o cupom, clique no link:* \n${linkCupom}`;
 
-  window.open(`https://wa.me/5517992800946?text=${encodeURIComponent(msg)}`, '_blank');
+  window.open(`https://wa.me/5517992800946?text=${encodeURIComponent(plainMessage)}`, '_blank');
 });
 
-// ===== BOTÃO TOPO E MENU ATIVO =====
-const btnTop = document.getElementById('btn-top');
+// ===== MENU E BOTÃO TOPO =====
+const menuLinks = document.querySelectorAll('.menu-scroll a');
 window.addEventListener('scroll', () => {
-  btnTop.style.display = window.scrollY > 400 ? 'flex' : 'none';
-  
-  const menuLinks = document.querySelectorAll('.menu-scroll a');
   let fromTop = window.scrollY + 120;
   menuLinks.forEach(link => {
-    const section = document.querySelector(link.getAttribute('href'));
-    if (section && section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
-      menuLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const section = document.querySelector(href);
+      if (section && section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
+        menuLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
     }
   });
 });
-btnTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-// ===== MODAL DE PROMOÇÃO =====
+const btnTop = document.getElementById('btn-top');
+window.addEventListener('scroll', () => { btnTop.style.display = window.scrollY > 400 ? 'flex' : 'none'; });
+btnTop?.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+// ===== LÓGICA DO MODAL DE DESCONTO =====
 const promoModal = document.getElementById('promo-modal');
+const closeModal = document.getElementById('close-modal');
 const btnPromoOk = document.getElementById('btn-promo-ok');
 
-window.addEventListener('load', () => {
-  setTimeout(() => { if (promoModal) promoModal.style.display = 'flex'; }, 1000);
-});
+if (promoModal) promoModal.style.display = 'flex';
 
-btnPromoOk?.addEventListener('click', () => {
-  garantiuDesconto = true;
-  promoModal.style.display = 'none';
-  alert("Desconto de 10% Garantido (exceto bebidas)! Aproveite.");
-  updateCart();
-});
+if (btnPromoOk) {
+  btnPromoOk.addEventListener('click', () => {
+    garantiuDesconto = true; 
+    promoModal.style.display = 'none';
+    alert("Desconto Garantido! Aproveite.");
+    updateCart(); 
+  });
+}
 
-document.getElementById('close-modal')?.addEventListener('click', () => { promoModal.style.display = 'none'; });
-window.addEventListener('click', (e) => { if (e.target === promoModal) promoModal.style.display = 'none'; });
+if (closeModal) closeModal.addEventListener('click', () => { promoModal.style.display = 'none'; });
+window.addEventListener('click', (evento) => { if (evento.target === promoModal) promoModal.style.display = 'none'; });
