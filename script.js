@@ -6,16 +6,26 @@ const cartItems = document.getElementById('cart-items');
 const cartCount = document.getElementById('cart-count');
 const mainContent = document.querySelector('main');
 const checkoutBtn = document.getElementById('checkout-btn');
+const clientNameInput = document.getElementById('client-name'); 
 const deliveryAddress = document.getElementById('delivery-address');
 const addressInput = document.getElementById('address');
 const trocoContainer = document.getElementById('troco-container');
 const trocoInput = document.getElementById('troco');
 const checkoutError = document.getElementById('checkout-error');
 
-// ===== CARRINHO =====
+// ===== VARIÁVEIS DE CONTROLE =====
 let cart = [];
 let deliveryFeeAdded = false;
+let garantiuDesconto = false; // Memória para o desconto
 
+// LISTA DE PALAVRAS-CHAVE PARA IDENTIFICAR BEBIDAS (Não recebem desconto)
+const bebidasKeywords = [
+  "Skol", "Bohemia", "Brahma", "Original", "Spaten", "Heineken", 
+  "Chopp", "Coca-Cola", "Antarctica", "Sprite", "Fanta", 
+  "Suco", "Del Valle", "2L", "600ml", "Long Neck", "Refrigerante"
+];
+
+// Abrir/Fechar Carrinho
 cartIcon?.addEventListener('click', () => {
   cartPanel.classList.toggle('open');
   cartPanel.setAttribute('aria-hidden', !cartPanel.classList.contains('open'));
@@ -24,6 +34,7 @@ cartIcon?.addEventListener('click', () => {
 
 cartClose?.addEventListener('click', () => cartIcon.click());
 
+// ===== ATUALIZAR CARRINHO =====
 function updateCart() {
   cartItems.innerHTML = '';
 
@@ -36,31 +47,66 @@ function updateCart() {
   cartCount.style.display = 'block';
   cartCount.textContent = cart.length;
 
-  let total = 0;
+  let subtotal = 0;
+  let valorParaDesconto = 0; // Soma apenas o que NÃO é bebida
+  
   cart.forEach((item, index) => {
-    total += parseFloat(item.price);
+    const precoItem = parseFloat(item.price);
+    subtotal += precoItem;
+    
+    // Verifica se o item é uma bebida pelo nome
+    const eBebida = bebidasKeywords.some(k => item.name.toLowerCase().includes(k.toLowerCase()));
+
+    // Se NÃO for bebida e NÃO for a taxa de entrega, entra na conta do desconto
+    if (!eBebida && item.name !== 'Taxa de entrega') {
+        valorParaDesconto += precoItem;
+    }
+
     const div = document.createElement('div');
     div.className = 'cart-item';
     div.innerHTML = `
       <h4>${item.name}</h4>
-      <span>R$ ${parseFloat(item.price).toFixed(2)}</span>
+      <span>R$ ${precoItem.toFixed(2)}</span>
       <button class="btn-remove" aria-label="Remover item" data-index="${index}">&times;</button>
     `;
     cartItems.appendChild(div);
   });
 
+  // --- MATEMÁTICA DO DESCONTO ---
+  let total = subtotal;
+  let htmlDesconto = '';
+
+  if (garantiuDesconto && valorParaDesconto > 0) {
+    const valorDesconto = valorParaDesconto * 0.10; // 10% apenas sobre lanches/porções
+    total = subtotal - valorDesconto; 
+    
+    htmlDesconto = `
+      <div style="color: #28a745; font-size: 15px; margin-top: 5px;">
+        Desconto (10% exceto bebidas): - R$ ${valorDesconto.toFixed(2)}
+      </div>
+    `;
+  }
+
   const totalDiv = document.createElement('div');
-  totalDiv.style.marginTop = '10px';
+  totalDiv.style.marginTop = '15px';
   totalDiv.style.fontWeight = '900';
   totalDiv.style.color = '#ffc107';
-  totalDiv.textContent = `Total: R$ ${total.toFixed(2)}`;
+  
+  if (garantiuDesconto && valorParaDesconto > 0) {
+     totalDiv.innerHTML = `Subtotal: R$ ${subtotal.toFixed(2)} ${htmlDesconto} <div style="font-size: 22px; color: #fff; margin-top: 5px;">Total Final: R$ ${total.toFixed(2)}</div>`;
+  } else {
+     totalDiv.innerHTML = `<div style="font-size: 22px; color: #fff;">Total: R$ ${total.toFixed(2)}</div>`;
+  }
+  
   cartItems.appendChild(totalDiv);
 
+  // Evento de remover item
   document.querySelectorAll('.btn-remove').forEach(btn => {
     btn.addEventListener('click', e => {
       const i = e.target.getAttribute('data-index');
       if (cart[i].name === 'Taxa de entrega') {
-        document.querySelector('input[name="pickup"][value="balcão"]').checked = true;
+        const radioBalcao = document.querySelector('input[name=\"pickup\"][value=\"balcão\"]');
+        if(radioBalcao) radioBalcao.checked = true;
         deliveryFeeAdded = false;
       }
       cart.splice(i, 1);
@@ -69,7 +115,7 @@ function updateCart() {
   });
 }
 
-// ===== SCROLL HORIZONTAL DO MENU =====
+// ===== SCROLL DO MENU =====
 const scrollContainer = document.querySelector('.menu-scroll');
 document.querySelector('.scroll-btn.left')?.addEventListener('click', () => {
   scrollContainer.scrollBy({ left: -150, behavior: 'smooth' });
@@ -91,15 +137,9 @@ document.querySelectorAll('.btn-add').forEach(btn => {
 
     if (!price || price <= 0) return;
 
-    let name;
-    if (!variation) {
-      name = baseName;
-    } else if (variation.toLowerCase().includes(baseName.toLowerCase())) {
-      name = variation;
-    } else {
-      name = `${baseName} (${variation})`;
-    }
+    let name = variation ? `${baseName} (${variation})` : baseName;
 
+    // Evita duplicados rápidos
     const lastItem = cart[cart.length - 1];
     if (lastItem && lastItem.name === name && lastItem.price === price) return;
 
@@ -111,17 +151,13 @@ document.querySelectorAll('.btn-add').forEach(btn => {
   });
 });
 
-// ===== MOSTRAR CAMPO DE ENDEREÇO E TROCO =====
-document.querySelectorAll('input[name="pickup"]').forEach(radio => {
-  radio.addEventListener('change', toggleFields);
-});
-document.querySelectorAll('input[name="payment"]').forEach(radio => {
-  radio.addEventListener('change', toggleFields);
-});
+// ===== ENTREGA E PAGAMENTO =====
+document.querySelectorAll('input[name=\"pickup\"]').forEach(radio => radio.addEventListener('change', toggleFields));
+document.querySelectorAll('input[name=\"payment\"]').forEach(radio => radio.addEventListener('change', toggleFields));
 
 function toggleFields() {
-  const pickup = document.querySelector('input[name="pickup"]:checked')?.value || '';
-  const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
+  const pickup = document.querySelector('input[name=\"pickup\"]:checked')?.value || '';
+  const payment = document.querySelector('input[name=\"payment\"]:checked')?.value || '';
 
   if (deliveryAddress) deliveryAddress.style.display = pickup === 'delivery' ? 'block' : 'none';
   if (trocoContainer) trocoContainer.style.display = payment === 'dinheiro' ? 'block' : 'none';
@@ -130,133 +166,110 @@ function toggleFields() {
 
   if (pickup === 'delivery' && deliveryFeeIndex === -1) {
     cart.push({ name: 'Taxa de entrega', price: 4.00 });
-    deliveryFeeAdded = true;
     updateCart();
   } else if (pickup !== 'delivery' && deliveryFeeIndex !== -1) {
     cart.splice(deliveryFeeIndex, 1);
-    deliveryFeeAdded = false;
     updateCart();
   }
 }
 
-// ===== FUNÇÃO PARA MOSTRAR ERROS BONITOS =====
 function showError(msg) {
   if (!checkoutError) return;
   checkoutError.textContent = msg;
   checkoutError.style.display = 'block';
   checkoutError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setTimeout(() => {
-    checkoutError.style.display = 'none';
-  }, 4000); // esconde após 4s
+  setTimeout(() => { checkoutError.style.display = 'none'; }, 4000);
 }
 
-// ===== FINALIZAR PEDIDO VIA WHATSAPP (MODIFICADO COM O CUPOM) =====
+// ===== FINALIZAR PEDIDO NO WHATSAPP =====
 checkoutBtn?.addEventListener('click', () => {
-  if (cart.length === 0) {
-    showError('Seu carrinho está vazio!');
-    return;
-  }
+  const nomeCliente = clientNameInput?.value.trim();
+  if (!nomeCliente) { showError('Por favor, digite seu nome antes de finalizar.'); clientNameInput.focus(); return; }
+  if (cart.length === 0) { showError('Seu carrinho está vazio!'); return; }
 
-  const payment = document.querySelector('input[name="payment"]:checked')?.value || '';
-  const pickup = document.querySelector('input[name="pickup"]:checked')?.value || '';
-
-  if (!pickup) {
-    showError('Selecione se o pedido será retirado no balcão ou por delivery.');
-    return;
-  }
-
-  if (!payment) {
-    showError('Selecione a forma de pagamento.');
-    return;
-  }
+  const payment = document.querySelector('input[name=\"payment\"]:checked')?.value || '';
+  const pickup = document.querySelector('input[name=\"pickup\"]:checked')?.value || '';
+  if (!pickup || !payment) { showError('Selecione a forma de entrega e pagamento.'); return; }
 
   const troco = trocoInput?.value.trim() || '';
   const endereco = addressInput?.value.trim() || '';
 
-  // Cria a mensagem para o WhatsApp em texto puro
-  let plainMessage = 'Olá, gostaria de fazer o pedido:\n\n';
-  
-  // Cria uma variável separada só com os itens formatados para o cupom de impressão
-  let itensParaCupom = ''; 
+  // Cálculo de valores (Mesma lógica do Carrinho)
+  let subtotal = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+  let valorParaDesconto = cart.reduce((sum, item) => {
+    const eBebida = bebidasKeywords.some(k => item.name.toLowerCase().includes(k.toLowerCase()));
+    return (!eBebida && item.name !== 'Taxa de entrega') ? sum + parseFloat(item.price) : sum;
+  }, 0);
 
+  let total = subtotal;
+  let txtDesconto = "";
+  if (garantiuDesconto && valorParaDesconto > 0) {
+    const desc = valorParaDesconto * 0.10;
+    total = subtotal - desc;
+    txtDesconto = `\nSubtotal: R$ ${subtotal.toFixed(2)}\nDesconto (Exceto Bebidas): - R$ ${desc.toFixed(2)}`;
+  }
+
+  // Montagem da Mensagem
+  let msg = `*NOVO PEDIDO - ${nomeCliente}*\n\n`;
+  let itensCupom = "";
   cart.forEach(item => {
-    const linhaItem = `- ${item.name} - R$ ${parseFloat(item.price).toFixed(2)}`;
-    plainMessage += `${linhaItem}\n`;
-    itensParaCupom += `${linhaItem}\n`;
+    const linha = `- ${item.name}: R$ ${parseFloat(item.price).toFixed(2)}`;
+    msg += linha + "\n";
+    itensCupom += linha + "\n";
   });
 
-  const total = cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
-  plainMessage += `\nTotal: R$ ${total.toFixed(2)}\n`;
-  plainMessage += `Pagamento: ${payment}\n`;
-  plainMessage += `Retirada: ${pickup}\n`;
-
-  // Adiciona endereço e troco na mensagem do WhatsApp e também no Cupom de Impressão
-  if (pickup === 'delivery') {
-      plainMessage += `Endereço: ${endereco || '-'}\n`;
-      itensParaCupom += `\nEndereço: ${endereco || '-'}`;
-  }
-  if (payment === 'dinheiro' && troco) {
-      plainMessage += `Precisa de troco para: R$ ${troco}\n`;
-      itensParaCupom += `\nTroco p/: R$ ${troco}`;
-  }
-
-  // --- INÍCIO DA GERAÇÃO DO LINK DO CUPOM ---
-  let urlBase = window.location.href.split('?')[0]; 
-  urlBase = urlBase.substring(0, urlBase.lastIndexOf('/'));
-  if (!urlBase) urlBase = window.location.origin;
-
-  // Como o seu código não tem um campo de nome de cliente, deixei como 'Não informado'
-  // Se você adicionar um input de nome depois, basta trocar aqui
-  const nomeCliente = 'Não informado'; 
-
-  const linkCupom = `${urlBase}/cupom.html?cliente=${encodeURIComponent(nomeCliente)}&itens=${encodeURIComponent(itensParaCupom)}&total=${encodeURIComponent(total.toFixed(2))}`;
+  msg += `${txtDesconto}\n*Total Final: R$ ${total.toFixed(2)}*\n\n`;
+  msg += `👤 Cliente: ${nomeCliente}\n💳 Pagamento: ${payment}\n📍 Retirada: ${pickup}`;
+  if (pickup === 'delivery') msg += `\n🏠 Endereço: ${endereco || '-'}`;
   
-  // Adiciona o link mágico no final da mensagem do WhatsApp
-  plainMessage += `\n🖨️ *Para imprimir o cupom, clique no link abaixo:*\n${linkCupom}`;
-  // --- FIM DA GERAÇÃO DO LINK DO CUPOM ---
+  if (payment === 'dinheiro' && troco) {
+      let vTroco = parseFloat(troco.replace(',', '.'));
+      if (!isNaN(vTroco) && vTroco > total) {
+          msg += `\n💵 Troco para R$ ${vTroco.toFixed(2)} (Levar R$ ${(vTroco - total).toFixed(2)})`;
+      }
+  }
 
-  // Codifica a mensagem final e abre o WhatsApp
-  window.open(`https://wa.me/5517992800946?text=${encodeURIComponent(plainMessage)}`, '_blank');
+  if (garantiuDesconto) msg += `\n✅ *PEDIDO COM DESCONTO DO SITE!*`;
+
+  // Link do Cupão
+  const urlCupom = new URL('cupom.html', window.location.href).href;
+  const link = `${urlCupom}?cliente=${encodeURIComponent(nomeCliente)}&itens=${encodeURIComponent(itensCupom)}&total=${encodeURIComponent(total.toFixed(2))}`;
+  msg += `\n\n🖨️ *Imprimir Cupom:* \n${link}`;
+
+  window.open(`https://wa.me/5517992800946?text=${encodeURIComponent(msg)}`, '_blank');
 });
 
-// ===== MENU FIXO E SCROLL SUAVE =====
-const menuLinks = document.querySelectorAll('.menu-scroll a');
+// ===== BOTÃO TOPO E MENU ATIVO =====
+const btnTop = document.getElementById('btn-top');
 window.addEventListener('scroll', () => {
+  btnTop.style.display = window.scrollY > 400 ? 'flex' : 'none';
+  
+  const menuLinks = document.querySelectorAll('.menu-scroll a');
   let fromTop = window.scrollY + 120;
   menuLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (!href || !href.startsWith('#')) return;
-    const section = document.querySelector(href);
-    if (!section) return;
-    if (section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
+    const section = document.querySelector(link.getAttribute('href'));
+    if (section && section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
       menuLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
     }
   });
 });
+btnTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-menuLinks.forEach(link => {
-  link.addEventListener('click', e => {
-    const href = link.getAttribute('href');
-    if (href && href.startsWith('#')) {
-      e.preventDefault();
-      const target = document.querySelector(href);
-      if (target) {
-        const offset = 80;
-        const targetPos = target.getBoundingClientRect().top + window.scrollY - offset;
-        window.scrollTo({ top: targetPos, behavior: 'smooth' });
-      }
-    }
-  });
+// ===== MODAL DE PROMOÇÃO =====
+const promoModal = document.getElementById('promo-modal');
+const btnPromoOk = document.getElementById('btn-promo-ok');
+
+window.addEventListener('load', () => {
+  setTimeout(() => { if (promoModal) promoModal.style.display = 'flex'; }, 1000);
 });
 
-// ===== BOTÃO VOLTAR AO TOPO =====
-const btnTop = document.getElementById('btn-top');
-
-window.addEventListener('scroll', () => {
-  btnTop.style.display = window.scrollY > 400 ? 'flex' : 'none';
+btnPromoOk?.addEventListener('click', () => {
+  garantiuDesconto = true;
+  promoModal.style.display = 'none';
+  alert("Desconto de 10% Garantido (exceto bebidas)! Aproveite.");
+  updateCart();
 });
 
-btnTop?.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+document.getElementById('close-modal')?.addEventListener('click', () => { promoModal.style.display = 'none'; });
+window.addEventListener('click', (e) => { if (e.target === promoModal) promoModal.style.display = 'none'; });
