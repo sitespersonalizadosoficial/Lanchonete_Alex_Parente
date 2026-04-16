@@ -2,6 +2,72 @@
   box-sizing: border-box;
 }
 
+/* ========================================= */
+/* ESTILOS DO MODAL DE DESCONTO              */
+/* ========================================= */
+
+/* FUNDO ESCURO */
+.modal-overlay { /* Nome corrigido para conectar com o HTML */
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+/* CAIXA DO MODAL */
+.modal-content {
+  background: #111;
+  color: #fff;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 350px;
+  width: 90%;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
+  animation: aparecer 0.4s ease;
+  position: relative; /* Adicionado para o botão X (fechar) não fugir da caixa */
+}
+
+/* ANIMAÇÃO */
+@keyframes aparecer {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* BOTÃO DE DESCONTO */
+#btn-promo-ok {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #ffc107;
+  color: #000; /* Letra preta para dar contraste com o botão amarelo */
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* BOTÃO X (FECHAR) */
+.close-btn { /* Nome corrigido para conectar com o HTML */
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 26px;
+  color: #fff;
+  cursor: pointer;
+}
+
 /* Campo de troco */
 #troco-container {
   display: none;
