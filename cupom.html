@@ -15,8 +15,8 @@
             margin: 0 auto;
             color: #000;
             background: #fff;
-            font-size: 24px; /* Letra maior */
-            font-weight: normal; /* Tirando o negrito forte */
+            font-size: 24px; 
+            font-weight: normal; 
             padding: 5px;
         }
         
@@ -27,40 +27,37 @@
             margin-bottom: 15px;
         }
         
-        .header h2 { margin: 0; font-size: 32px; font-weight: normal; } /* Título sem negrito */
+        .header h2 { margin: 0; font-size: 32px; font-weight: normal; } 
         .header p { margin: 5px 0 0 0; font-size: 22px; }
         
-        .info { margin-bottom: 20px; font-size: 24px; }
+        .info { margin-bottom: 20px; }
         .info p { margin: 8px 0; }
         
         #txt-itens { 
             white-space: pre-wrap; 
             display: block; 
             margin-top: 10px; 
-            font-size: 26px; /* Itens grandes */
-            line-height: 1.4; /* Espaçamento bom entre os lanches */
-            font-weight: normal; /* Mantendo a letra fina igual da sua foto */
+            line-height: 1.4; 
+            font-weight: normal; 
         }
         
         .total {
-            font-size: 28px; 
             border-top: 2px dashed #000;
             padding-top: 15px;
             margin-top: 15px;
             text-align: right;
-            font-weight: normal; /* Sem negrito no total */
+            font-weight: normal;
         }
         
         .footer {
             text-align: center;
             margin-top: 25px;
-            font-size: 20px;
             border-top: 2px dashed #000;
             padding-top: 15px;
             font-weight: normal;
         }
 
-        /* Regras estritas SÓ para a hora que a impressora puxar */
+        /* A MÁGICA ACONTECE AQUI: Regras estritas SÓ para a impressora */
         @media print {
             @page { 
                 margin: 0; 
@@ -70,7 +67,15 @@
                 padding: 5px;
                 width: 100%; 
                 max-width: 100%;
+                /* Forçando o tamanho em "pontos" na hora de imprimir */
+                font-size: 20pt !important; 
             }
+            .header h2 { font-size: 28pt !important; }
+            .header p { font-size: 18pt !important; }
+            .info { font-size: 20pt !important; }
+            #txt-itens { font-size: 24pt !important; line-height: 1.5 !important; }
+            .total { font-size: 26pt !important; }
+            .footer { font-size: 16pt !important; }
         }
     </style>
 </head>
