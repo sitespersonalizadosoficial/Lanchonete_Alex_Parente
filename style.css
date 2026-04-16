@@ -2,6 +2,14 @@
   box-sizing: border-box;
 }
 
+#cart-footer {
+  position: sticky;
+  bottom: 0;
+  background: #111;
+  padding: 15px 0;
+  border-top: 1px solid #333;
+}
+
 /* ========================================= */
 /* ESTILOS DO MODAL DE DESCONTO              */
 /* ========================================= */
