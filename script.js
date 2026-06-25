@@ -160,7 +160,7 @@ function toggleFields() {
   const deliveryFeeIndex = cart.findIndex(item => item.name === 'Taxa de entrega');
 
   if (pickup === 'delivery' && deliveryFeeIndex === -1) {
-    cart.push({ name: 'Taxa de entrega', price: 4.00 });
+    cart.push({ name: 'Taxa de entrega', price: 5.00 });
     deliveryFeeAdded = true;
     updateCart();
   } else if (pickup !== 'delivery' && deliveryFeeIndex !== -1) {
