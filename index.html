@@ -5,6 +5,400 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <title>Cardápio Premium - Alex Lanches</title>
+  <style>
+/* ===== ROLETA DA SORTE — visual premium + luzes girando ===== */
+.aviso-roleta{
+  width:calc(100% - 24px);
+  max-width:1100px;
+  margin:8px auto 4px;
+  padding:7px 12px;
+  box-sizing:border-box;
+  border:1px solid rgba(255,193,7,.30);
+  border-radius:10px;
+  background:linear-gradient(90deg,rgba(255,193,7,.08),rgba(255,255,255,.025),rgba(255,193,7,.08));
+  color:#f5f5f5;
+  text-align:center;
+  font-size:13px;
+  line-height:1.35;
+}
+
+
+.roleta-centro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid #ffc107;
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.9),
+    0 4px 15px rgba(0,0,0,0.45);
+  z-index: 20;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleta-centro img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.aviso-roleta strong{color:#ffc107}
+
+.modal-roleta-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  align-items:center;
+  justify-content:center;
+  padding:10px;
+  box-sizing:border-box;
+  background:rgba(0,0,0,.82);
+  backdrop-filter:blur(8px);
+}
+.modal-roleta-content{
+  width:min(470px,96vw);
+  max-height:96vh;
+  overflow:auto;
+  box-sizing:border-box;
+  position:relative;
+  padding:22px 16px 18px;
+  text-align:center;
+  border-radius:26px;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(255,193,7,.12),transparent 34%),
+    linear-gradient(145deg,#171717,#080808);
+  border:1px solid rgba(255,193,7,.65);
+  box-shadow:0 0 0 1px rgba(255,193,7,.08),0 0 45px rgba(255,193,7,.16),0 25px 80px rgba(0,0,0,.75);
+}
+.modal-roleta-content h2{
+  margin:0;
+  font-size:28px;
+  line-height:1;
+  color:#ffc107;
+  font-weight:950;
+  letter-spacing:-.7px;
+  text-shadow:0 0 10px rgba(255,193,7,.25),1px 2px 0 #5b3600;
+}
+.modal-roleta-content>p{margin:0;color:#ddd;font-size:13px;line-height:1.35}
+.roleta-topo{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 35px 4px;position:relative}
+.roleta-topo .roleta-presente{font-size:34px;filter:drop-shadow(0 0 8px rgba(255,193,7,.65))}
+.roleta-topo .roleta-coroa{font-size:27px;filter:drop-shadow(0 0 8px rgba(255,193,7,.55))}
+.roleta-topo p strong{color:#ffc107}
+.premios-titulo{margin:3px 0 10px;font-size:19px;font-weight:950;color:#ffc107;text-shadow:0 0 10px rgba(255,193,7,.2)}
+.premios-titulo span{display:inline-block;margin-right:5px}
+.premios-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:0 auto 15px;width:min(420px,100%)}
+.premio-card{
+  min-height:74px;
+  border-radius:13px;
+  padding:8px 5px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:900;
+  line-height:1.08;
+  box-shadow:0 5px 12px rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.35);
+}
+.premio-card .icone{font-size:23px;line-height:1;margin-bottom:4px}
+.premio-card .texto{font-size:10px}
+.premio-card.p1{background:linear-gradient(145deg,#ffbd2e,#ff9700)}
+.premio-card.p2{background:linear-gradient(145deg,#ff3042,#dc1230)}
+.premio-card.p3{background:linear-gradient(145deg,#19c864,#07994b)}
+.premio-card.p4{background:linear-gradient(145deg,#b73bc4,#7c1592)}
+.premio-card.p5{background:linear-gradient(145deg,#ff8f00,#e65100)}
+.premio-card.p6{background:linear-gradient(145deg,#673ab7,#311b92)}
+.premio-card.p7{background:linear-gradient(145deg,#555,#222)}
+#btn-girar-roleta{
+  width:min(330px,90%);
+  padding:14px 20px;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:13px;
+  background:linear-gradient(135deg,#ffc107,#ff8f00);
+  color:#111;
+  font-size:17px;
+  font-weight:950;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(255,193,7,.25),0 9px 20px rgba(0,0,0,.35);
+  transition:.2s;
+}
+#btn-girar-roleta:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 25px rgba(255,193,7,.4),0 12px 24px rgba(0,0,0,.4)}
+#btn-girar-roleta:disabled{background:#777;box-shadow:none;cursor:not-allowed}
+#resultado-roleta{margin:13px auto 0;min-height:48px;color:#fff;font-size:15px;font-weight:700;line-height:1.45}
+#resultado-roleta strong{font-size:17px}
+#resumo-premio-roleta{display:none;margin:16px 0;padding:15px;border-radius:16px;background:linear-gradient(135deg,#211b0c,#121212);
+  border:1px solid #f0c36a;box-shadow:0 5px 16px rgba(0,0,0,.35);color:#fff;text-align:left}
+.premio-resumo-titulo{font-size:17px;font-weight:900;margin-bottom:10px;color:#ffc107}
+.premio-linha{display:flex;justify-content:space-between;gap:15px;padding:6px 0;font-size:14px}
+.premio-linha.desconto{color:#58e88a;font-weight:800}
+.premio-total{display:flex;justify-content:space-between;gap:15px;margin-top:8px;padding-top:11px;border-top:1px solid #6a5a2a;font-size:17px;font-weight:900}
+.premio-total strong{color:#ffc107;font-size:21px}
+.premio-ganho{display:inline-block;margin:0 0 8px;padding:7px 11px;border-radius:20px;background:#10351e;color:#58e88a;font-weight:900;font-size:14px}
+
+
+/* ===== ESTRUTURA VISUAL DA ROLETA ===== */
+.roleta-container{
+  position:relative;
+  width:min(330px,78vw);
+  aspect-ratio:1/1;
+  margin:24px auto 20px;
+  display:grid;
+  place-items:center;
+}
+.roleta-container::before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  border-radius:50%;
+  background:conic-gradient(#ffb300,#ff1744,#00e676,#2196f3,#ffb300);
+  filter:blur(7px);
+  opacity:.75;
+  animation:brilhoRoleta 3s linear infinite;
+}
+.roleta-container::after{
+  content:"";
+  position:absolute;
+  inset:-5px;
+  border-radius:50%;
+  border:2px solid #ffc107;
+  box-shadow:0 0 12px #ffc107,0 0 30px rgba(255,193,7,.5);
+  z-index:7;
+  pointer-events:none;
+}
+@keyframes brilhoRoleta{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+
+.roleta-luzes{
+  position:absolute;
+  inset:-16px;
+  border-radius:50%;
+  z-index:15;
+  pointer-events:none;
+  animation:girarLuzesRoleta 5s linear infinite;
+}
+.roleta-luzes i{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:7px;
+  height:7px;
+  margin:-3.5px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 5px #fff,0 0 12px #ffc107,0 0 20px #ffc107;
+}
+.roleta-luzes i:nth-child(1){--a:0deg}
+.roleta-luzes i:nth-child(2){--a:15deg}
+.roleta-luzes i:nth-child(3){--a:30deg}
+.roleta-luzes i:nth-child(4){--a:45deg}
+.roleta-luzes i:nth-child(5){--a:60deg}
+.roleta-luzes i:nth-child(6){--a:75deg}
+.roleta-luzes i:nth-child(7){--a:90deg}
+.roleta-luzes i:nth-child(8){--a:105deg}
+.roleta-luzes i:nth-child(9){--a:120deg}
+.roleta-luzes i:nth-child(10){--a:135deg}
+.roleta-luzes i:nth-child(11){--a:150deg}
+.roleta-luzes i:nth-child(12){--a:165deg}
+.roleta-luzes i:nth-child(13){--a:180deg}
+.roleta-luzes i:nth-child(14){--a:195deg}
+.roleta-luzes i:nth-child(15){--a:210deg}
+.roleta-luzes i:nth-child(16){--a:225deg}
+.roleta-luzes i:nth-child(17){--a:240deg}
+.roleta-luzes i:nth-child(18){--a:255deg}
+.roleta-luzes i:nth-child(19){--a:270deg}
+.roleta-luzes i:nth-child(20){--a:285deg}
+.roleta-luzes i:nth-child(21){--a:300deg}
+.roleta-luzes i:nth-child(22){--a:315deg}
+.roleta-luzes i:nth-child(23){--a:330deg}
+.roleta-luzes i:nth-child(24){--a:345deg}
+.roleta-luzes i{
+  transform:rotate(var(--a)) translateY(-164px);
+}
+@keyframes girarLuzesRoleta{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+.ponteiro{
+  position:absolute;
+  top:-18px;
+  left:50%;
+  transform:translateX(-50%);
+  width:0;
+  height:0;
+  border-left:15px solid transparent;
+  border-right:15px solid transparent;
+  border-top:30px solid #ff1744;
+  filter:drop-shadow(0 0 7px rgba(255,23,68,.8));
+  z-index:25;
+}
+
+.roleta{
+  position:relative;
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  border-radius:50%;
+  overflow:hidden;
+  border:7px solid #fff;
+  background:conic-gradient(
+    from -25.714deg,
+    #ffad0a 0deg 51.428deg,
+    #ef1753 51.428deg 102.856deg,
+    #19bd5b 102.856deg 154.284deg,
+    #2698d6 154.284deg 205.712deg,
+    #9b59d0 205.712deg 257.140deg,
+    #ff7043 257.140deg 308.568deg,
+    #555 308.568deg 360deg
+  );
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.8),
+    inset 0 0 28px rgba(0,0,0,.3),
+    0 0 20px rgba(255,193,7,.5),
+    0 12px 28px rgba(0,0,0,.55);
+  transition:transform 4.8s cubic-bezier(.12,.72,.18,1);
+  z-index:10;
+}
+.roleta::before{
+  content:"";
+  position:absolute;
+  inset:9px;
+  border-radius:50%;
+  border:2px dashed rgba(255,255,255,.82);
+  z-index:3;
+  pointer-events:none;
+}
+.roleta::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.22),transparent 42%);
+  pointer-events:none;
+  z-index:2;
+}
+
+/* Linhas de separação entre os 7 prêmios */
+.roleta-divisoria{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:2px;
+  height:50%;
+  transform-origin:50% 100%;
+  background:rgba(255,255,255,.95);
+  box-shadow:0 0 4px rgba(0,0,0,.65);
+  z-index:5;
+  pointer-events:none;
+}
+.roleta-divisoria.d1{transform:translateX(-50%) rotate(25.714deg)}
+.roleta-divisoria.d2{transform:translateX(-50%) rotate(77.142deg)}
+.roleta-divisoria.d3{transform:translateX(-50%) rotate(128.570deg)}
+.roleta-divisoria.d4{transform:translateX(-50%) rotate(180deg)}
+.roleta-divisoria.d5{transform:translateX(-50%) rotate(231.428deg)}
+.roleta-divisoria.d6{transform:translateX(-50%) rotate(282.856deg)}
+.roleta-divisoria.d7{transform:translateX(-50%) rotate(334.284deg)}
+
+.roleta-setor{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:31%;
+  min-height:0;
+  margin:0;
+  padding:2px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:#fff;
+  font-size:10px;
+  line-height:1.08;
+  font-weight:950;
+  letter-spacing:-.15px;
+  text-shadow:0 2px 4px rgba(0,0,0,.95),0 0 5px rgba(0,0,0,.5);
+  z-index:6;
+  pointer-events:none;
+  transform-origin:center center;
+}
+
+/* Cada texto fica exatamente no meio do seu setor */
+.roleta-setor.s1{transform:translate(-50%,-50%) rotate(0deg) translateY(-91px) rotate(0deg)}
+.roleta-setor.s2{transform:translate(-50%,-50%) rotate(51.428deg) translateY(-91px) rotate(-51.428deg)}
+.roleta-setor.s3{transform:translate(-50%,-50%) rotate(102.856deg) translateY(-91px) rotate(-102.856deg)}
+.roleta-setor.s4{transform:translate(-50%,-50%) rotate(154.284deg) translateY(-91px) rotate(-154.284deg)}
+.roleta-setor.s5{transform:translate(-50%,-50%) rotate(205.712deg) translateY(-91px) rotate(-205.712deg)}
+.roleta-setor.s6{transform:translate(-50%,-50%) rotate(257.140deg) translateY(-91px) rotate(-257.140deg)}
+.roleta-setor.s7{transform:translate(-50%,-50%) rotate(308.568deg) translateY(-91px) rotate(-308.568deg)}
+
+.roleta-centro{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:62px;
+  height:62px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff,#eee 48%,#c7c7c7);
+  border:5px solid #222;
+  box-shadow:
+    0 0 0 3px #ffc107,
+    0 4px 16px rgba(0,0,0,.6),
+    0 0 18px rgba(255,193,7,.6);
+  z-index:20;
+  font-size:27px;
+}
+
+@media(max-width:480px){
+  .aviso-roleta{
+    width:calc(100% - 16px);
+    margin:6px auto 3px;
+    padding:6px 9px;
+    font-size:11px;
+    border-radius:8px;
+  }
+  .modal-roleta-content{padding:20px 10px 16px;border-radius:23px}
+  .modal-roleta-content h2{font-size:23px}
+  .roleta-container{width:min(292px,76vw);margin-top:21px;margin-bottom:16px}
+  .roleta-luzes{inset:-13px}
+  .roleta-luzes i{width:5px;height:5px;margin:-2.5px}
+  .roleta-luzes i{transform:rotate(var(--a)) translateY(-145px)}
+  .roleta-setor{width:30%;font-size:7.8px;line-height:1.03;padding:1px}
+  .roleta-setor.s1{transform:translate(-50%,-50%) rotate(0deg) translateY(-80px) rotate(0deg)}
+  .roleta-setor.s2{transform:translate(-50%,-50%) rotate(51.428deg) translateY(-80px) rotate(-51.428deg)}
+  .roleta-setor.s3{transform:translate(-50%,-50%) rotate(102.856deg) translateY(-80px) rotate(-102.856deg)}
+  .roleta-setor.s4{transform:translate(-50%,-50%) rotate(154.284deg) translateY(-80px) rotate(-154.284deg)}
+  .roleta-setor.s5{transform:translate(-50%,-50%) rotate(205.712deg) translateY(-80px) rotate(-205.712deg)}
+  .roleta-setor.s6{transform:translate(-50%,-50%) rotate(257.140deg) translateY(-80px) rotate(-257.140deg)}
+  .roleta-setor.s7{transform:translate(-50%,-50%) rotate(308.568deg) translateY(-80px) rotate(-308.568deg)}
+  .roleta-centro{width:55px;height:55px;font-size:23px}
+  .roleta-divisoria{height:50%;width:1.5px}
+  .roleta-divisoria.d1{transform:translateX(-50%) rotate(25.714deg)}
+  .roleta-divisoria.d2{transform:translateX(-50%) rotate(77.142deg)}
+  .roleta-divisoria.d3{transform:translateX(-50%) rotate(128.570deg)}
+  .roleta-divisoria.d4{transform:translateX(-50%) rotate(180deg)}
+  .roleta-divisoria.d5{transform:translateX(-50%) rotate(231.428deg)}
+  .roleta-divisoria.d6{transform:translateX(-50%) rotate(282.856deg)}
+  .roleta-divisoria.d7{transform:translateX(-50%) rotate(334.284deg)}
+  .premios-grid{grid-template-columns:repeat(2,1fr);gap:7px}
+  .premio-card{min-height:70px}
+}
+</style>
 </head>
 
 <body>
@@ -38,7 +432,7 @@
       <a href="#lanches">🍔 Lanches de Hambúrguer</a>
       <a href="#Lombo-File">🍔 Lanches de Lombo/Filé</a>
       <a href="#lanche-frango">🍔 Lanche de Frango</a>
-      <a href="#Linha-Smash">🍔Smash </a>
+      <a href="#Linha-Smash">🍔 Smash </a>
       <a href="#linha-gourmet">🍔 Linha Gourmet</a>
       <a href="#linhas-especiais">🍔 Linhas Especiais</a>
       <a href="#hot-dog">🌭 Hot Dog</a>
@@ -48,1562 +442,1760 @@
       <a href="#mata-fome">🍔 Mata Fome</a>
       <a href="#porcoes">🍟 Porções</a>
       <a href="#recheadinhos">🍳 Recheadinhos</a>
-       <a href="#jantinha">🍽️ Jantinha</a>
+      <a href="#jantinha">🍽️ Jantinha</a>
       <a href="#bebidas">🥤 Bebidas</a>
       <a href="patrocio.html" class="btn-sponsors">🎖️ Ver Patrocinadores</a>
     </nav>
 
     <button class="scroll-btn right" aria-label="Scroll menu para direita">›</button>
   </div>
-
- 
-  
-
-<main>
- <section id="lanches"><h2>Lanches de Hambúrguer</h2><div class="cards">
-  
-  <div class="card" data-name="X-Tudo" data-price="29.00">
-      <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://img77.uenicdn.com/image/upload/v1568110937/category/shutterstock_424917007.jpg" alt="X-Tudo" />
-    <div class="card-content"><h3>X-Tudo</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, ovo, bacon, salsicha e salada.</p><div class="price">R$ 29,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-
-  <div class="card" data-name="X-Tudo turbo" data-price="30.00">
-      <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://sachefmio.blob.core.windows.net/fotos/x-tudo-turbo-180104.jpg" alt="X-Tudo Turbo" />
-    <div class="card-content"><h3>X-Tudo Turbo</h3>
-      <p>Pão de hambúrguer, 3 Hambúrgueres, presunto, queijo, ovo, bacon, salsicha e salada.</p><div class="price">R$ 30,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Bacon" data-price="28.00">
-     <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSPWBBGvRiizmstT40-70_ny91CgBwLoDdOg&s" alt="X-Bacon" />
-    <div class="card-content"><h3>X-Bacon</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, bacon e salada.</p><div class="price">R$ 28,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Burguer" data-price="20.00">
-      <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://png.pngtree.com/png-vector/20250521/ourlarge/pngtree-double-beef-burger-with-cheese-lettuce-tomato-slices-and-pickle-rounds-png-image_16343155.png" alt="X-Burguer" />
-    <div class="card-content"><h3>X-Burguer</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, 2 fatias de presunto, 2 fatias de queijo e Tomate.</p><div class="price">R$ 20,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Tri-Burguer" data-price="23.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://www.shutterstock.com/image-photo/smash-burger-lettuce-cheddar-cheese-600nw-2479601213.jpg" alt="Tri-Burguer" />
-    <div class="card-content"><h3>Tri-Burguer</h3>
-      <p>Pão de hambúrguer, 3 Hambúrgueres, 2 fatias de presunto, 2 fatias de queijo e Tomate.</p><div class="price">R$ 23,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Salada" data-price="20.00">
-     <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://assets.unileversolutions.com/recipes-v2/106684.jpg" alt="X-Salada" />
-    <div class="card-content"><h3>X-Salada</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo e salada.</p><div class="price">R$ 20,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Cheddar" data-price="20.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTO71KEQEuvXs7cBuCtxMbAyHvSvth0-BG0wg&s" alt="X-Cheddar" />
-    <div class="card-content"><h3>X-Cheddar</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, Salada e cheddar.</p><div class="price">R$ 20,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Calabresa" data-price="22.00">
-      <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://e7.pngegg.com/pngimages/993/43/png-clipart-cheeseburger-whopper-hamburger-cheeseburger-bacon-burger-king-specialty-sandwiches-burger-king-food-cheese-thumbnail.png" alt="X-Calabresa" />
-    <div class="card-content"><h3>X-Calabresa</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, calabresa, presunto, queijo e salada.</p><div class="price">R$ 22,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Cebim" data-price="22.00">
-     <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://img77.uenicdn.com/image/upload/v1543484687/service_images/shutterstock_1040760661.jpg" alt="X-Cebim" />
-    <div class="card-content"><h3>X-Cebim</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, ovo, cebola, bacon e salada.</p><div class="price">R$ 22,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-Egg" data-price="23.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZMMzRONgLe3TyRKXZZUBbt9UnbAf9_W7w8Q&s" alt="X-Egg" />
-    <div class="card-content"><h3>X-Egg</h3>
-      <p>Pão de hambúrguer, 2 Hambúrgueres, 2 fatias de presunto, queijo, ovo e salada.</p><div class="price">R$ 23,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Tri-Egg" data-price="28.00">
-     <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://assets.unileversolutions.com/recipes-v2/84502.jpg" alt="Tri-Egg" />
-    <div class="card-content"><h3>Tri-Egg</h3>
-      <p>Pão de hambúrguer, 3 Hambúrgueres, 2 fatias de presunto, queijo, 2 ovos e salada.</p><div class="price">R$ 28,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Nitro" data-price="18.00">
-     <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://i.pinimg.com/736x/ff/18/3f/ff183ff2f5a57ee6bda49e966f494b89.jpg" alt="Nitro" />
-    <div class="card-content"><h3>Nitro</h3>
-      <p>Pão de hambúrguer, 3 Hambúrgueres, presunto, queijo e salada.</p><div class="price">R$ 18,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Saladinha Tudo" data-price="22.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://t3.ftcdn.net/jpg/00/84/28/54/360_F_84285488_CaWrmiQ9xWJXFpCPMHD1r2ZYAzcESfkU.jpg" alt="Saladinha Tudo" />
-    <div class="card-content"><h3>Saladinha Tudo</h3>
-      <p>Pão de hambúrguer, presunto, queijo, ovo, bacon, salsicha e salada.</p><div class="price">R$ 22,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Saladinha Egg" data-price="18.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://senhorlancheepizzaria.sleeck.com.br/_core/_uploads//2024/06/1353010624bd2b0hggbh.png" alt="Saladinha Egg" />
-    <div class="card-content"><h3>Saladinha Egg</h3>
-      <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo, ovo e salada.</p><div class="price">R$ 18,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Saladinha Bacon" data-price="20.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://pocket.devrocket.com.br/uploads/cardapios/imagens/4-2cf5f5b2d5edc4ce4556c8adcd94946bdbf261dc.png" alt="Saladinha Bacon" />
-    <div class="card-content"><h3>Saladinha Bacon</h3>
-      <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo, bacon e salada.</p><div class="price">R$ 20,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Saladinha Burguer" data-price="17.00">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://s3-sa-east-1.amazonaws.com/deliveryon-uploads/products/traillerdoserginho/34_55c2ab9b72a92.png" alt="Saladinha Burguer" />
-    <div class="card-content"><h3>Saladinha Burguer</h3>
-      <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo e salada.</p><div class="price">R$ 17,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Saladinha" data-price="12.00">
-    
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUqq_Zlhr-ivUZ3g48AtdPXTr8eiT20Zo24Q&s" alt="Saladinha" />
-    <div class="card-content"><h3>Saladinha</h3>
-      <p>Pão de hambúrguer, hambúrguer, presunto, queijo e salada.</p><div class="price">R$ 12,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="X-emergencial" data-price="18.00">
-      <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://img.cdndsgni.com/preview/10117678.jpg" alt="X-emergencial" />
-    <div class="card-content"><h3>X-emergencial</h3>
-      <p>Pão, 2 hambúrgueres, batata palha, presunto, queijo e salada.</p><div class="price">R$ 18,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Mac Auxílio" data-price="18.00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://emporiodenoticias.com/wp-content/uploads/2017/09/hamburger-day.jpg" alt="Mac Auxílio" />
-
-    <div class="card-content"><h3>Mac Auxílio</h3>
-      <p>Pão, hambúrguer, calabresa, ovo, presunto, queijo e salada.</p><div class="price">R$ 18,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Mac Lex" data-price="18.00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://catracalivre.com.br/wp-content/uploads/2014/02/ham.jpg" alt="Mac Lex" />
-    <div class="card-content"><h3>Mac Lex</h3>
-      <p>Pão, hambúrguer, salsicha, ovo, presunto, queijo e salada.</p><div class="price">R$ 18,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Costela burguer " data-price="20,00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://www.seara.com.br/wp-content/uploads/2025/09/Hamburguer-de-costela-Maturatta-com-vinagrete-MOBILE-1.png" alt="Costela burguer" />
-    <div class="card-content"><h3>Costela Burguer</h3>
-      <p>Pão, hambúrguer de costela, queijo, presunto e molho Especial.</p><div class="price">R$ 20,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-   <div class="card" data-name="Costela salada " data-price="22,00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4z6n_5Veye7LZfOPWL_wnGMmGfL-wTkR3zw&s" alt="Costela salada" />
-    <div class="card-content"><h3>Costela salada</h3>
-      <p>Pão, hambúrguer de costela, queijo, presunto, tomate, alface ou rúcula e molho Especial.</p><div class="price">R$ 22,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-    <div class="card" data-name="Costela Egg " data-price="25,00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://cdn6.campograndenews.com.br/uploads/noticias/2022/08/25/d5fbdf736ea061157a91a1a70b2dbd964e9e57d7.jpeg" alt="Costela Egg" />
-    <div class="card-content"><h3>Costela Egg</h3>
-      <p>Pão, hambúrguer de costela, ovo, bacon, queijo, presunto, alface ou Rúcula e molho Especial.</p><div class="price">R$ 25,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-   <div class="card" data-name="Costela Tudo " data-price="35,00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGPadpn4AS3uZ7oPVg_5d1HG8jieGRrPGIWA&s" alt="Costela Tudo" />
-    <div class="card-content"><h3>Costela Tudo</h3>
-      <p>Pão, hambúrguer de costela, bacon, calabresa, queijo, presunto, alface ou Rúcula e molho Especial.</p><div class="price">R$ 35,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Costela Duplo " data-price="42,00">
-    <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEjpIkF7z5wdMhe3_R8wE6EEmrPeP6jKcNmg&s" alt="Costela Duplo" />
-    <div class="card-content"><h3>Costela Duplo</h3>
-      <p>Pão, dois hambúrguer de costela,dois ovos, calabresa, queijo, presunto, alface ou Rúcula e molho Especial.</p><div class="price">R$ 42,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-</div></section>
-
-
-    <section id="Lombo-File"><h2>Lanche de Lombo/Filé</h2><div class="cards">
-
-
-    <div class="card" data-name="lombo queijo" data-price="34.00">
-        <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://cdn.deliway.com.br/blog/base/4ee/a8b/ccd/receita-smash-burger.jpg" 
-      alt="lombo queijo" />
-      <div class="card-content"><h3>lombo queijo</h3>
-        <p>Pão francês, Lombo, Queijo e Tomate.</p><div class="price">R$ 34,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Lombo Salada" data-price="32.00">
-        <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://img77.uenicdn.com/image/upload/v1554311487/category/shutterstock_334701605.jpg"
-       alt="Lombo Salada" />
-      <div class="card-content"><h3>Lombo Salada</h3>
-        <p>Pão francês, Lombo, Presunto, Queijo e Tomate.</p><div class="price">R$ 32,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-
-    <div class="card" data-name="Lombo Tudo" data-price="36.00">
-        <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/groups/17138137786626b9121fb50.jpeg" 
-      alt="Lombo Tudo" />
-      <div class="card-content"><h3>Lombo Tudo</h3>
-        <p>Pão francês, Lombo, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p><div class="price">R$ 36,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-    <div class="card" data-name="Lombo Egg" data-price="29.00">
-        <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://d1muf25xaso8hp.cloudfront.net/https://img.criativodahora.com.br/homologacao/thumbs/2025/05/28/01971915-7287-7375-b03b-86a94cd43930.jpg?w=1000&h=&auto=compress&dpr=1&fit=max" 
-      alt="Lombo Egg" />
-      <div class="card-content"><h3>Lombo Egg</h3>
-        <p>Pão francês, Lombo, Presunto, Queijo, Ovo e Salada.</p><div class="price">R$ 29,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Filé Bacon" data-price="40.00">
-        <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://alemaolanches.festzap.com.br/_core/_uploads//2022/05/10331405226g7idh20d4.jpg" alt=" Filé Bacon" />
-      <div class="card-content"><h3>Filé Bacon</h3>
-        <p>Pão Francês, Filé, Queijo, Bacon e Salada.</p><div class="price">R$ 40,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-    <div class="card" data-name="Filé Queijo" data-price="36.00">
-        <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://guiadacozinha.com.br/wp-content/uploads/2018/04/Sanduiche-de-file.jpg" alt="Filé Queijo" />
-      <div class="card-content"><h3>Filé Queijo</h3>
-        <p>Pão Francês, Filé, Queijo e Tomate.</p><div class="price">R$ 36,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-    <div class="card" data-name="Filé Salada" data-price="36.00">
-        <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://t3.ftcdn.net/jpg/00/84/28/54/360_F_84285488_CaWrmiQ9xWJXFpCPMHD1r2ZYAzcESfkU.jpg" alt="Filé Salada" />
-      <div class="card-content"><h3>Filé Salada</h3>
-        <p>Pão Francês, Filé, Presunto, Queijo e Salada.</p><div class="price">R$36,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-    <div class="card" data-name="Filé Tudo" data-price="42.00">
-              <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://www.folhadelondrina.com.br/img/2017/07/0x800/img_3389.webp?fallback=https%3A%2F%2Fwww.folhadelondrina.com.br%2Fimg%2F2017%2F07%2Fimg_3389.jpg%3Fxid%3D4363243&xid=4363243" alt="Filé Salada" />
-      <div class="card-content"><h3>Filé Tudo</h3><p>Pão Francês, Filé, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p><div class="price">R$ 42,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Filé Patrão" data-price="44.00">
-              <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://portalbelohorizonte.com.br/sites/default/files/arquivos/comer-e-beber/2025-02/x-3.jpg" alt="Filé Patrão" />
-      <div class="card-content"><h3> Filé Patrão</h3>
-        <p>Pão Francês, Filé, Ovo, Batata Palha, Queijo, Cebola Caramelizada e Salada.</p><div class="price">R$ 44,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Filé Egg" data-price="38.00">
-              <span class="img-info">Imagem ilustrativa</span>
-
-      <img src="https://alemaolanches.festzap.com.br/_core/_uploads//2022/05/1042140522heaff957ga.jpg" alt="Filé Egg" />
-      <div class="card-content"><h3>Filé Egg</h3>
-        <p>Pão Francês, Filé, Presunto, Queijo, Ovo e Salada.</p><div class="price">R$ 38,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-  </div></section>
-
-
-  <section id="lanche-frango"><h2>Lanche de Frango</h2><div class="cards">
-
-    <div class="card" data-name="Frango Bacon" data-price="30.00">
-              <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://d1muf25xaso8hp.cloudfront.net/https://img.criativodahora.com.br/2024/04/criativo-6618e9cfc7ddbimg-2024-04-126618e9cfc7de06618e9cfc7de1.jpeg?w=1000&h=&auto=compress&dpr=1&fit=max" alt="Frango Bacon" />
-      <div class="card-content"><h3>Frango Bacon</h3>
-        <p>Pâo Francês, Frango, Bacon, Presunto, Queijo e salada.</p><div class="price">R$ 30,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-
-    <div class="card" data-name="Frango Queijo" data-price="30.00">
-              <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRiqtiCUopT2wklqr7hcpWwNWSCQZ-igc7TVw&s" alt="Frango Queijo" />
-      <div class="card-content"><h3>Frango Queijo</h3>
-        <p>Pâo Francês, Frango, Queijo e Tomate.</p><div class="price">R$ 30,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Frango Salada" data-price="30.00">
-              <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://www.seara.com.br/wp-content/uploads/2025/09/hamburguer_de_frango.webp" alt="Frango Salada" />
-      <div class="card-content"><h3>Frango Salada</h3><p>Pâo Francês, Frango, Presento, Queijo e Salada.</p><div class="price">R$ 30,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Frango Tudo" data-price="35.00">
-              <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSag2yQi3sJzUNhpaMaYX-sqKB0zQAgBFOBJg&s" alt="Frango Tudo" />
-      <div class="card-content"><h3>Frango Tudo</h3>
-        <p>Pâo Francês, Frango, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p><div class="price">R$ 35,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Frango Egg" data-price="31.00">
-                    <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://imagens.jotaja.com/produtos/06a09714-c050-462d-80a1-de91c8631add.jpg" alt="Frango Egg" />
-      <div class="card-content"><h3>Frango Egg</h3>
-        <p>Pâo Francês, Frango, Ovo, Presunto, Queijo e Salada.</p><div class="price">R$ 31,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-    
-    <div class="card" data-name="Frango Cubano" data-price="35.00">
-        <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://content.paodeacucar.com/wp-content/uploads/2019/08/Hamburguer-de-Salm%C3%A3o-1.jpg" alt="Frango Cubano" />
-      <div class="card-content"><h3>Frango Cubano</h3>
-        <p>Pâo Francês, Frango, Queijo, Catupiry, Batata Palha e Salada.</p><div class="price">R$ 35,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-    <div class="card" data-name="Frango Catupiry" data-price="32.00">
-      <span class="img-info">Imagem ilustrativa</span>
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbs2xN_EVL-PMYkwtMkMU5tCMRv3MLZBfmnA&s" alt="Frango Catupiry" />
-      <div class="card-content"><h3>Frango Catupiry</h3>
-        <p>Pâo Francês, Frango, Catupiry, Queijo, Milho e Salada.</p><div class="price">R$ 32,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-  </div>
-</section>
-
-  <section id="jantinha"><h2>Jantinhas</h2><div class="cards">
-  
-  <div class="card" data-name="Jantinha de filé" data-price="63.99">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYJLjIbXab7XkHOFcgMEiNBx7WYQEhH403Yg&s" alt="jantinha de filé" />
-    <div class="card-content"><h3>Jantinha de filé</h3>
-      <p>Arroz, feijão, carne, salada, batata frita com catupiry e bacon.</p><div class="price">R$ 63,99</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="jantinha frango cremoso" data-price="63.99">
-      <span class="img-info">Imagem ilustrativa</span>
-
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBkzlRI02RFlfNA7T7xZJr1iieJSMPeVF-Ww&s" alt="jantinha frango cremoso" />
-    <div class="card-content"><h3>jantinha frango cremoso</h3>
-      <p>Arroz, feijão, frango com catupiry, salada, batata frita com catupiry e bacon.</p><div class="price">R$ 63,99</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  <div class="card" data-name="Jantinha de Tilápia" data-price="70.00">
-     <span class="img-info">Imagem ilustrativa</span>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmfXxbPBJ0fBwgIaVkIzfSO0Xz4bWU-jc9oQ&s" alt="jantinha de Tilápia" />
-    <div class="card-content"><h3>jantinha de Tilápia</h3>
-      <p>Arroz, feijão, Tilápia, salada, batata frita com catupiry e bacon.</p><div class="price">R$ 70,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-  </div>
-
-  
-</div></section>
-
-
- <section id="Linha-Smash"><h2>Smash</h2><div class="cards">
-
-    <div class="card" data-name="Smash Kids" data-price="15.00">
-      <div class="card-content">
-        <h3>Smash kids </h3>
-        <p>Pão de brioche,  Hambúrguer Smash e cheddar.</p>
-        <div class="price">R$ 15,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Smash geleia pimenta" data-price="18.00">
-      <div class="card-content">
-        <h3>Smash geleia pimenta</h3>
-        <p>Pão de brioche, geleia de pimenta,hambúrguer Smash, cebola roxa,  4 fatias de tomate, 1 fatia de Mussarela e alface.</p>
-        <div class="price">R$ 18,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Smash Duplo" data-price="30.00">
-      <div class="card-content">
-        <h3>Smash Duplo</h3>
-        <p>Pão de brioche, 2 hambúrguer smash, cebola com bacon, Barbecue e queijo cheddar.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-      <div class="card" data-name="Smash Caipira" data-price="30.00">
-      <div class="card-content">
-        <h3>Smash Caipira</h3>
-        <p>Pão de brioche, 2 hambúrguer smash, queijo, Catupiry,Batata palha, bacon.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-
-  
-  </div>
-</section>
-
-
-
-
-   <section id="linha-gourmet">
-  <h2>Linha Gourmet</h2>
-  <div class="cards">
-
-    <div class="card" data-name="Boi Bandido" data-price="38.00">
-      <div class="card-content">
-        <h3>Boi Bandido</h3>
-        <p> Pão de Brioche, 3 Hambúrgueres de 130g, Cebola Caramelizada, Catupiry ou Cheddar, Salada, Queijo e Bacon.</p>
-        <div class="price">R$ 38,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-
-    <div class="card" data-name="Boi Caipira" data-price="28.00">
-      <div class="card-content">
-        <h3>Boi Caipira</h3>
-        <p> Pão de Brioche, Hambúrguer de 130g, Batata Palha, Bacon, Queijo e Catupiry.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-
-    <div class="card" data-name="Mimosa Cheddar" data-price="29.00">
-      <div class="card-content">
-        <h3>Mimosa Cheddar</h3>
-        <p> Pão de Brioche, Hambúrguer de 130g, Cebola Caramelizada, Bacon, Queijo e Cheddar.</p>
-        <div class="price">R$ 29,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Bezerro Louco" data-price="30.00">
-      <div class="card-content">
-        <h3>Bezerro Louco</h3>
-        <p> Pão de Brioche, 2 Hambúrgueres de 130g, Cebola Caramelizada, Bacon, Queijo e Barbecue.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Bezerro Atolado" data-price="40.00">
-      <div class="card-content">
-        <h3>Bezerro Atolado</h3>
-        <p>Pão de Brioche, 2 Hambúrgueres de 130g, 1 Hambúrguer de Mandioca, Salada, Cebola, Tomate picado e Queijo.</p>
-        <div class="price">R$ 40,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Furioso" data-price="30.00">
-      <div class="card-content">
-        <h3>Furioso</h3>
-        <p>Pão de Brioche, Hambúrguer 200g, Bacon, Queijo e Catupiry.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Xerife" data-price="32.00">
-      <div class="card-content">
-        <h3>Xerife</h3>
-        <p> Pão de Brioche, 2 Hambúrgueres de Pimenta, Bacon, Cheddar, Queijo, Cebola Roxa e Salada.</p>
-        <div class="price">R$ 32,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-   
-    <div class="card" data-name="Lenda" data-price="25.00">
-      <div class="card-content">
-        <h3>Lenda</h3>
-        <p>Pão de Brioche, Hambúrguer de carne 80g, hambúrguer de linguiça 80g, Bacon, Queijo e Salada  .</p>
-        <div class="price">R$ 25,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name=" Snack Cheddar" data-price="20.00">
-      <div class="card-content">
-        <h3>Snack Cheddar</h3>
-        <p>Pão de Brioche, Hambúrguer 80g, Cheddar, Queijo e Salada.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Snack Catupiry" data-price="20.00">
-      <div class="card-content">
-        <h3>Snack Catupiry</h3>
-        <p>Pão de Brioche, Hambúrguer, Catupiry, Queijo e Salada.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name=" Mexicano" data-price="32.00">
-      <div class="card-content">
-        <h3>Mexicano</h3>
-        <p>Pão de Brioche, Hambúrguer de Pimenta de 150g, Doritos, Cebola Caramelizada, Cheddar, Salada, Queijo e Bacon.</p>
-        <div class="price">R$ 32,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-        <div class="card" data-name=" X-Picanha Gourmet" data-price="30.00">
-      <div class="card-content">
-        <h3> X- Picanha Gourmet</h3>
-        <p> Pão de Brioche, 2 hambúrgueres de Picanha, Cebola Roxa, Molho Especial, Mussarela e salada.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-        <div class="card" data-name=" X-Costela" data-price="32.00">
-      <div class="card-content">
-        <h3>X-Costela</h3>
-        <p>Pão Francês, 2 hambúrgueres de Costela, Cebola no Shoyo, Bacon, Mussarela e Tomate.</p>
-        <div class="price">R$ 32,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-        <div class="card" data-name=" X-Predileto Gourmet" data-price="30.00">
-      <div class="card-content">
-        <h3>X-Predileto Gourmet</h3>
-        <p>Pão de Brioche, Bacon, 2 hambúrgueres Bovinos Tradicional, Molho Barbecue e Salada.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-        <div class="card" data-name=" Zé Vaqueiro" data-price="40.00">
-      <div class="card-content">
-        <h3> Zé Vaqueiro</h3>
-        <p>Pão Francês, Filé, Calabresa, Ovo, Cebola, Milho, Queijo e Salada.</p>
-        <div class="price">R$ 40,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-     <div class="card" data-name=" Costela Burguer" data-price="20.00">
-      <div class="card-content">
-        <h3> Costela Burguer</h3>
-        <p>Pão, Hambúrguer de costela, Queijo, Presunto, e Molho Especial.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-     <div class="card" data-name=" Costela Salada" data-price="22.00">
-      <div class="card-content">
-        <h3>  Costela Salada</h3>
-        <p>Pão, Hambúrguer de Costela, Queijo, Presunto, Tomate, Alface, ou Rúcula e Molho Especial.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-     <div class="card" data-name=" Costela Egg" data-price="25.00">
-      <div class="card-content">
-        <h3> Costela Egg</h3>
-        <p>Pão, Hambúrguer de Costela, Bacon, Ovo, Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
-        <div class="price">R$ 25,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-     <div class="card" data-name="Costela Tudo" data-price="35.00">
-      <div class="card-content">
-        <h3> Costela Tudo</h3>
-        <p>Pão, Hambúrguer de Costela, Bacon, Calabresa, Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
-        <div class="price">R$ 35,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-     <div class="card" data-name=" Costela Duplo" data-price="42.00">
-      <div class="card-content">
-        <h3>  Costela Duplo</h3>
-        <p>Pão, 2 Hambúrgueres de Costela, 2 Ovos, Calabresa Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
-        <div class="price">R$ 42,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
-<section id="linhas-especiais"><h2>Linhas Especiais</h2><div class="cards">
-
-    <div class="card" data-name="Saladinha Pops" data-price="20.00">
-      <div class="card-content">
-        <h3>Saladinha Pops</h3>
-        <p>Pão de Hambúrguer, 3 Hambúrgueres, Salada, Presunto, Queijo e Batata Palha.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Americano" data-price="25.00">
-      <div class="card-content">
-        <h3>Americano</h3>
-        <p>Pão de Hambúrguer, 3 Ovos, 4 Fatias de Presunto, Queijo e Salada.</p>
-        <div class="price">R$ 25,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Vegetariano" data-price="22.00">
-      <div class="card-content">
-        <h3>Vegetariano</h3>
-        <p>Pão de Hambúrguer, 2 Ovos, Queijo, Catupiry e Salada.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Misto Quente" data-price="25.00">
-      <div class="card-content">
-        <h3>Misto Quente</h3>
-        <p>Pão de Hambúrguer, Presunto, Queijo e Tomate.</p>
-        <div class="price">R$ 25,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Tri Tudo" data-price="37.00">
-      <div class="card-content">
-        <h3>Tri Tudo</h3>
-        <p>Pão de Hambúrguer, 3 Hambúrgueres, 3 Ovos, 3 Salsichas, 3 Fatias de Presunto, Queijo, Bacon e Salada.</p>
-        <div class="price">R$ 37,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="FBB" data-price="35.00">
-      <div class="card-content">
-        <h3>FBB</h3>
-        <p>Pão Francês, Frango, Bacon, Brócolis, Catupiry e Salada.</p>
-        <div class="price">R$ 35,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Especial da Casa" data-price="47.00">
-      <div class="card-content">
-        <h3>Especial da Casa  </h3>
-        <p>  Pão de Hambúrguer, Hambúrguer, Filé, Frango, Ovo, Bacon, Salsicha, Presunto, Queijo, Catupiry, Batata Palha e Salada.</p>
-        <div class="price">R$ 47,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Especial da Casa 2 Pães" data-price="85.00">
-      <div class="card-content">
-        <h3>Especial da Casa 2 Pães</h3>
-        <p>2 pães de Hambúrguer, Hambúrguer, Filé, Frango, Ovo, Bacon, Salsicha, Presunto, Queijo, Catupiry, Batata Palha e Salada.</p>
-        <div class="price">R$ 85,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
-<section id="hot-dog">
-  <h2>Hot Dog</h2>
-  <div class="cards">
-
-    <div class="card" data-name="Hot Dog" data-price="12.00">
-      <div class="card-content">
-        <h3>Hot Dog</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Ketchup e Maionese.</p>
-        <div class="price">R$ 12,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Milho" data-price="14.00">
-      <div class="card-content">
-        <h3>Hot Milho</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Milho, Ketchup e Maionese.</p>
-        <div class="price">R$ 14,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Milho Especial" data-price="20.00">
-      <div class="card-content">
-        <h3>Hot Milho Especial</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Milho, Ketchup e Maionese.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Duplo" data-price="16.00">
-      <div class="card-content">
-        <h3>Hot Duplo</h3>
-        <p>Pão, Salada, Batata Palha, 4 Salsichas, Ketchup e Maionese.</p>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Especial" data-price="17.00">
-      <div class="card-content">
-        <h3>Hot Especial</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Ketchup e Maionese.</p>
-        <div class="price">R$ 17,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Catupiry e Queijo" data-price="26.00">
-      <div class="card-content">
-        <h3>Hot Catupiry e Queijo</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Catupiry e Queijo.</p>
-        <div class="price">R$ 26,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Presunto e Queijo" data-price="18.00">
-      <div class="card-content">
-        <h3>Hot Presunto e Queijo</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Presunto, Queijo, Ketchup e Maionese.</p>
-        <div class="price">R$ 18,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Mineiro" data-price="20.00">
-      <div class="card-content">
-        <h3>Hot Mineiro</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Queijo, e Catupiry.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Frango" data-price="18.00">
-      <div class="card-content">
-        <h3>Hot Frango</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Frango, Maionese e Ketchup.</p>
-        <div class="price">R$ 18,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Dog Batatinha" data-price="20.00">
-      <div class="card-content">
-        <h3>Dog Batatinha</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Ovo, Presunto, Queijo, Ketchup e Maionese.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Dogão" data-price="34.00">
-      <div class="card-content">
-        <h3>Dogão</h3>
-        <p>Pão, Salada, 3 Hambúrgueres, 2 Salsichas, Bacon, Presunto, Queijo e Catupiry.</p>
-        <div class="price">R$ 34,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer" data-price="17.00">
-      <div class="card-content">
-        <h3>Hot Burguer</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Ketchup e Maionese.</p>
-        <div class="price">R$ 17,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer Duplo" data-price="18.00">
-      <div class="card-content">
-        <h3>Hot Burguer Duplo</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, 2 Hambúrgueres, Ketchup e Maionese.</p>
-        <div class="price">R$ 18,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer Triplo" data-price="22.00">
-      <div class="card-content">
-        <h3>Hot Burguer Triplo</h3>
-        <p>Pão, Salada, Batata Palha, 3 Salsichas, 3 Hambúrgueres, Ketchup e Maionese.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer Bacon" data-price="22.00">
-      <div class="card-content">
-        <h3>Hot Burguer Bacon</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Bacon, Ketchup e Maionese.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer Queijo" data-price="22.00">
-      <div class="card-content">
-        <h3>Hot Burguer Queijo</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Queijo, Ketchup e Maionese.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Tradicional" data-price="15.00">
-      <div class="card-content">
-        <h3>Hot Tradicional</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Milho, Queijo, Ketchup, Mostarda e Maionese.</p>
-        <div class="price">R$ 15,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Frango Catupiry" data-price="23.00">
-      <div class="card-content">
-        <h3>Hot Frango Catupiry</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Frango e Catupiry.</p>
-        <div class="price">R$ 23,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Burguer Catupiry" data-price="22.00">
-      <div class="card-content">
-        <h3>Hot Burguer Catupiry</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Queijo e Catupiry.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Cheddar" data-price="22.00">
-      <div class="card-content">
-        <h3>Hot Cheddar</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon e Cheddar.</p>
-        <div class="price">R$ 22,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot Tudo" data-price="47.00">
-      <div class="card-content">
-        <h3>Hot Tudo</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsicha, Hambúrguer, Frango, Carne, Bacon, Ovo, Queijo, Cheddar e Catupiry.</p>
-        <div class="price">R$ 47,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Hot da Casa" data-price="34.00">
-      <div class="card-content">
-        <h3>Hot da Casa</h3>
-        <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Bacon, Calabresa, Queijo e Catupiry.</p>
-        <div class="price">R$ 34,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
-  <section id="porcao-na-tabua"><h2>Porção na Tábua</h2><div class="cards">
-    <div class="card" data-name="Porção Contra fíle na tábua " data-price="80.00">
-      <div class="card-content"><h3>Contra fíle na tábua</h3><p>Contra fíle, 
-        batata frita, cebola, torrada e tomate.</p><div class="price">R$ 80,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Frango na tábua" data-price="60.00">
-      <div class="card-content"><h3>Frango na tábua</h3><p>Frango, batata frita, torrada, cebola e tomate .</p><div class="price">R$ 60,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Frango e catupiry na tábua" data-price="70.00">
-      <div class="card-content"><h3>Frango e catupiry na tábua</h3><p>Frango com catupiry, batata frita, torrada, cebola e tomate.</p><div class="price">R$ 70,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Frango com bacon na tábua" data-price="75.00">
-      <div class="card-content"><h3>Frango com bacon na tábua</h3><p>Frango, bacon, 
-        batata frita, torrada, cebola e tomate.</p><div class="price">R$ 75,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Calabresa na tábua" data-price="60.00">
-      <div class="card-content"><h3>Calabresa na tábua</h3><p>Calabresa, 
-        batata frita, cebola e tomate.</p><div class="price">R$ 60,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Mista na tábua" data-price="80.00">
-      <div class="card-content"><h3>Mista na tábua</h3><p>Bacon, calabresa, frango, 
-        filé, batata frita, torrada, cebola e tomate.</p><div class="price">R$ 80,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-
-     <div class="card" data-name="Porção Mista com catupiry na tábua" data-price="90.00">
-      <div class="card-content"><h3>Mista com catupiry na tábua</h3><p>Bacon, calabresa, frango, 
-        filé, catupiry, batata frita, torrada, cebola e tomate.</p><div class="price">R$ 90,00</div><button class="btn-add">Adicionar ao Carrinho</button></div>
-    </div>
-  </div></section>
-
-
- <section id="batatas-recheadas">
-  <h2>Batatas Recheadas</h2>
-  <div class="cards">
-
-    <div class="card" data-name="Batata Recheada Sabor Pizza" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Pizza</h3>
-        <p>Purê, presunto, Queijo, Tomate, Azeitona, Milho, Catupiry, e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name=" Batata Recheada Sabor Brócolis" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Brócolis</h3>
-        <p>Purê, Brócolis, Catupiry, Queijo, Bacon e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Carne seca" data-price="35.00">
-      <div class="card-content">
-        <h3>Batata Recheada Carne Seca</h3>
-        <p>Purê, Carne Seca, Catupiry, Queijo, e Batata Palha.</p>
-        <div class="price">R$ 35,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Carne e queijo" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Carne e queijo</h3>
-        <p>Purê, Filé, Catupiry, Queijo, e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Hot Burguer" data-price="30.00">
-      <div class="card-content">
-        <h3> Batata Recheada Hot Burguer</h3>
-        <p>Purê, Salsicha, Hambúrguer, Tomate, Bacon, Catupiry, Queijo e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Frango Catupiry" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Frango Catupiry</h3>
-        <p>Purê, Frango, Milho, Catupiry, Queijo e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Frango Bacon" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Frango Bacon</h3>
-        <p>Purê, Frango, Bacon, Catupiry, Queijo e Batata Palha.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Batata Recheada Sabor Calabresa Cremosa" data-price="30.00">
-      <div class="card-content">
-        <h3>Batata Recheada Calabresa Cremosa</h3>
-        <p>Purê, Calabresa, Tomate, Cebola e Catupiry.</p>
-        <div class="price">R$ 30,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<section id="omeletes">
-  <h2>Omeletes</h2>
-  <div class="cards">
-    <div class="card" data-name="Omelete de carne" data-price="28.00">
-      <div class="card-content">
-        <h3>Carne</h3>
-        <p>4 ovos, Carne, Queijo, e Catupiry.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Omelete de Pizza" data-price="28.00">
-      <div class="card-content">
-        <h3>Pizza</h3>
-        <p>4 ovos, presunto, Queijo, Tomate, Azeitona, Milho e Catupiry</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Omelete Carne seca" data-price="31.00">
-      <div class="card-content">
-        <h3>Carne seca</h3>
-        <p>4 ovos, Carne Seca, Catupiry e queijo.</p>
-        <div class="price">R$ 31,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Omelete Brócolis" data-price="28.00">
-      <div class="card-content">
-        <h3>Brócolis</h3>
-        <p>4 ovos, Brócolis, Catupiry, Bacon, e Queijo</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Omelete Frango" data-price="28.00">
-      <div class="card-content">
-        <h3>Frango</h3>
-        <p>4 ovos, Frango, Milho, Catupiry e queijo.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Omelete Calabresa" data-price="28.00">
-      <div class="card-content">
-        <h3>Calabresa</h3>
-        <p>$ ovos, Calabresa e tomate.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="mata-fome">
-  <h2>Mata Fome</h2>
-  <div class="cards">
-    <div class="card" data-name="Mata Fome" data-price="17.00">
-      <div class="card-content">
-        <h3>Mata Fome</h3>
-        <p>Pão de Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon e Salada.</p>
-        <div class="price">R$ 17,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Mata Fome Especial" data-price="20.00">
-      <div class="card-content">
-        <h3>Mata Fome Especial</h3>
-        <p>Pão de Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon, Salsicha e Salada.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Mata Fome Burguer" data-price="20.00">
-      <div class="card-content">
-        <h3>Mata Fome Burguer</h3>
-        <p>Pão de Hambúrguer, Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon e Salada.</p>
-        <div class="price">R$ 20,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="porcoes">
-  <h2>Porções</h2>
-  <div class="cards">
-
-    <div class="card" data-name="Batata Frita">
-      <div class="card-content">
-        <h3>Batata Frita</h3>
-        <div class="price">Meia: R$ 24,00 / Inteira: R$ 32,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Frita - Meia" data-price="24.00">Meia</button>
-          <button class="btn-add" data-name="Batata Frita - Inteira" data-price="32.00">Inteira</button>
+    <div class="aviso-roleta">
+      🎡 <strong>Roleta da Sorte:</strong> finalize seu pedido e descubra na hora qual surpresa a sorte reservou para você!
+    </div>
+
+  <main>
+    <section id="lanches">
+      <h2>Lanches de Hambúrguer</h2>
+      <div class="cards">
+        <div class="card" data-name="X-Tudo" data-price="29.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://img77.uenicdn.com/image/upload/v1568110937/category/shutterstock_424917007.jpg" alt="X-Tudo" />
+          <div class="card-content">
+            <h3>X-Tudo</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, ovo, bacon, salsicha e salada.</p>
+            <div class="price">R$ 29,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Tudo turbo" data-price="30.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://sachefmio.blob.core.windows.net/fotos/x-tudo-turbo-180104.jpg" alt="X-Tudo Turbo" />
+          <div class="card-content">
+            <h3>X-Tudo Turbo</h3>
+            <p>Pão de hambúrguer, 3 Hambúrgueres, presunto, queijo, ovo, bacon, salsicha e salada.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Bacon" data-price="28.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSPWBBGvRiizmstT40-70_ny91CgBwLoDdOg&s" alt="X-Bacon" />
+          <div class="card-content">
+            <h3>X-Bacon</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, bacon e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Burguer" data-price="20.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://png.pngtree.com/png-vector/20250521/ourlarge/pngtree-double-beef-burger-with-cheese-lettuce-tomato-slices-and-pickle-rounds-png-image_16343155.png" alt="X-Burguer" />
+          <div class="card-content">
+            <h3>X-Burguer</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, 2 fatias de presunto, 2 fatias de queijo e Tomate.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Tri-Burguer" data-price="23.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://www.shutterstock.com/image-photo/smash-burger-lettuce-cheddar-cheese-600nw-2479601213.jpg" alt="Tri-Burguer" />
+          <div class="card-content">
+            <h3>Tri-Burguer</h3>
+            <p>Pão de hambúrguer, 3 Hambúrgueres, 2 fatias de presunto, 2 fatias de queijo e Tomate.</p>
+            <div class="price">R$ 23,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Salada" data-price="20.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://assets.unileversolutions.com/recipes-v2/106684.jpg" alt="X-Salada" />
+          <div class="card-content">
+            <h3>X-Salada</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo e salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Cheddar" data-price="20.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTO71KEQEuvXs7cBuCtxMbAyHvSvth0-BG0wg&s" alt="X-Cheddar" />
+          <div class="card-content">
+            <h3>X-Cheddar</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, Salada e cheddar.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Calabresa" data-price="22.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://e7.pngegg.com/pngimages/993/43/png-clipart-cheeseburger-whopper-hamburger-cheeseburger-bacon-burger-king-specialty-sandwiches-burger-king-food-cheese-thumbnail.png" alt="X-Calabresa" />
+          <div class="card-content">
+            <h3>X-Calabresa</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, calabresa, presunto, queijo e salada.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Cebim" data-price="22.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://img77.uenicdn.com/image/upload/v1543484687/service_images/shutterstock_1040760661.jpg" alt="X-Cebim" />
+          <div class="card-content">
+            <h3>X-Cebim</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, presunto, queijo, ovo, cebola, bacon e salada.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Egg" data-price="23.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZMMzRONgLe3TyRKXZZUBbt9UnbAf9_W7w8Q&s" alt="X-Egg" />
+          <div class="card-content">
+            <h3>X-Egg</h3>
+            <p>Pão de hambúrguer, 2 Hambúrgueres, 2 fatias de presunto, queijo, ovo e salada.</p>
+            <div class="price">R$ 23,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Tri-Egg" data-price="28.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://assets.unileversolutions.com/recipes-v2/84502.jpg" alt="Tri-Egg" />
+          <div class="card-content">
+            <h3>Tri-Egg</h3>
+            <p>Pão de hambúrguer, 3 Hambúrgueres, 2 fatias de presunto, queijo, 2 ovos e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Nitro" data-price="18.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://i.pinimg.com/736x/ff/18/3f/ff183ff2f5a57ee6bda49e966f494b89.jpg" alt="Nitro" />
+          <div class="card-content">
+            <h3>Nitro</h3>
+            <p>Pão de hambúrguer, 3 Hambúrgueres, presunto, queijo e salada.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Saladinha Tudo" data-price="22.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://t3.ftcdn.net/jpg/00/84/28/54/360_F_84285488_CaWrmiQ9xWJXFpCPMHD1r2ZYAzcESfkU.jpg" alt="Saladinha Tudo" />
+          <div class="card-content">
+            <h3>Saladinha Tudo</h3>
+            <p>Pão de hambúrguer, presunto, queijo, ovo, bacon, salsicha e salada.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Saladinha Egg" data-price="18.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://senhorlancheepizzaria.sleeck.com.br/_core/_uploads//2024/06/1353010624bd2b0hggbh.png" alt="Saladinha Egg" />
+          <div class="card-content">
+            <h3>Saladinha Egg</h3>
+            <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo, ovo e salada.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Saladinha Bacon" data-price="20.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://pocket.devrocket.com.br/uploads/cardapios/imagens/4-2cf5f5b2d5edc4ce4556c8adcd94946bdbf261dc.png" alt="Saladinha Bacon" />
+          <div class="card-content">
+            <h3>Saladinha Bacon</h3>
+            <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo, bacon e salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Saladinha Burguer" data-price="17.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://s3-sa-east-1.amazonaws.com/deliveryon-uploads/products/traillerdoserginho/34_55c2ab9b72a92.png" alt="Saladinha Burguer" />
+          <div class="card-content">
+            <h3>Saladinha Burguer</h3>
+            <p>Pão de hambúrguer, 2 hambúrgueres, presunto, queijo e salada.</p>
+            <div class="price">R$ 17,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Saladinha" data-price="12.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUqq_Zlhr-ivUZ3g48AtdPXTr8eiT20Zo24Q&s" alt="Saladinha" />
+          <div class="card-content">
+            <h3>Saladinha</h3>
+            <p>Pão de hambúrguer, hambúrguer, presunto, queijo e salada.</p>
+            <div class="price">R$ 12,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-emergencial" data-price="18.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://img.cdndsgni.com/preview/10117678.jpg" alt="X-emergencial" />
+          <div class="card-content">
+            <h3>X-emergencial</h3>
+            <p>Pão, 2 hambúrgueres, batata palha, presunto, queijo e salada.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mac Auxílio" data-price="18.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://emporiodenoticias.com/wp-content/uploads/2017/09/hamburger-day.jpg" alt="Mac Auxílio" />
+          <div class="card-content">
+            <h3>Mac Auxílio</h3>
+            <p>Pão, hambúrguer, calabresa, ovo, presunto, queijo e salada.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mac Lex" data-price="18.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://catracalivre.com.br/wp-content/uploads/2014/02/ham.jpg" alt="Mac Lex" />
+          <div class="card-content">
+            <h3>Mac Lex</h3>
+            <p>Pão, hambúrguer, salsicha, ovo, presunto, queijo e salada.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela burguer" data-price="20.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://www.seara.com.br/wp-content/uploads/2025/09/Hamburguer-de-costela-Maturatta-com-vinagrete-MOBILE-1.png" alt="Costela burguer" />
+          <div class="card-content">
+            <h3>Costela Burguer</h3>
+            <p>Pão, hambúrguer de costela, queijo, presunto e molho Especial.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela salada" data-price="22.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4z6n_5Veye7LZfOPWL_wnGMmGfL-wTkR3zw&s" alt="Costela salada" />
+          <div class="card-content">
+            <h3>Costela salada</h3>
+            <p>Pão, hambúrguer de costela, queijo, presunto, tomate, alface ou rúcula e molho Especial.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Egg" data-price="25.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://cdn6.campograndenews.com.br/uploads/noticias/2022/08/25/d5fbdf736ea061157a91a1a70b2dbd964e9e57d7.jpeg" alt="Costela Egg" />
+          <div class="card-content">
+            <h3>Costela Egg</h3>
+            <p>Pão, hambúrguer de costela, ovo, bacon, queijo, presunto, alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 25,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Tudo" data-price="35.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGPadpn4AS3uZ7oPVg_5d1HG8jieGRrPGIWA&s" alt="Costela Tudo" />
+          <div class="card-content">
+            <h3>Costela Tudo</h3>
+            <p>Pão, hambúrguer de costela, bacon, calabresa, queijo, presunto, alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Duplo" data-price="42.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEjpIkF7z5wdMhe3_R8wE6EEmrPeP6jKcNmg&s" alt="Costela Duplo" />
+          <div class="card-content">
+            <h3>Costela Duplo</h3>
+            <p>Pão, dois hambúrguer de costela,dois ovos, calabresa, queijo, presunto, alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 42,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Batata Frita Bacon e Queijo">
-      <div class="card-content">
-        <h3>Batata Frita</h3>
-        <p>Bacon e Queijo.</p>
-        <div class="price">Meia: R$ 32,00 / Inteira: R$ 40,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Frita Bacon e Queijo - Meia" data-price="32.00">Meia</button>
-          <button class="btn-add" data-name="Batata Frita Bacon e Queijo - Inteira" data-price="40.00">Inteira</button>
+    <section id="Lombo-File">
+      <h2>Lanche de Lombo/Filé</h2>
+      <div class="cards">
+        <div class="card" data-name="lombo queijo" data-price="34.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://cdn.deliway.com.br/blog/base/4ee/a8b/ccd/receita-smash-burger.jpg" alt="lombo queijo" />
+          <div class="card-content">
+            <h3>lombo queijo</h3>
+            <p>Pão francês, Lombo, Queijo e Tomate.</p>
+            <div class="price">R$ 34,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Lombo Salada" data-price="32.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://img77.uenicdn.com/image/upload/v1554311487/category/shutterstock_334701605.jpg" alt="Lombo Salada" />
+          <div class="card-content">
+            <h3>Lombo Salada</h3>
+            <p>Pão francês, Lombo, Presunto, Queijo e Tomate.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Lombo Tudo" data-price="36.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/groups/17138137786626b9121fb50.jpeg" alt="Lombo Tudo" />
+          <div class="card-content">
+            <h3>Lombo Tudo</h3>
+            <p>Pão francês, Lombo, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p>
+            <div class="price">R$ 36,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Lombo Egg" data-price="29.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://d1muf25xaso8hp.cloudfront.net/https://img.criativodahora.com.br/homologacao/thumbs/2025/05/28/01971915-7287-7375-b03b-86a94cd43930.jpg?w=1000&h=&auto=compress&dpr=1&fit=max" alt="Lombo Egg" />
+          <div class="card-content">
+            <h3>Lombo Egg</h3>
+            <p>Pão francês, Lombo, Presunto, Queijo, Ovo e Salada.</p>
+            <div class="price">R$ 29,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Bacon" data-price="40.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://alemaolanches.festzap.com.br/_core/_uploads//2022/05/10331405226g7idh20d4.jpg" alt=" Filé Bacon" />
+          <div class="card-content">
+            <h3>Filé Bacon</h3>
+            <p>Pão Francês, Filé, Queijo, Bacon e Salada.</p>
+            <div class="price">R$ 40,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Queijo" data-price="36.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://guiadacozinha.com.br/wp-content/uploads/2018/04/Sanduiche-de-file.jpg" alt="Filé Queijo" />
+          <div class="card-content">
+            <h3>Filé Queijo</h3>
+            <p>Pão Francês, Filé, Queijo e Tomate.</p>
+            <div class="price">R$ 36,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Salada" data-price="36.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://t3.ftcdn.net/jpg/00/84/28/54/360_F_84285488_CaWrmiQ9xWJXFpCPMHD1r2ZYAzcESfkU.jpg" alt="Filé Salada" />
+          <div class="card-content">
+            <h3>Filé Salada</h3>
+            <p>Pão Francês, Filé, Presunto, Queijo e Salada.</p>
+            <div class="price">R$ 36,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Tudo" data-price="42.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://www.folhadelondrina.com.br/img/2017/07/0x800/img_3389.webp?fallback=https%3A%2F%2Fwww.folhadelondrina.com.br%2Fimg%2F2017%2F07%2Fimg_3389.jpg%3Fxid%3D4363243&xid=4363243" alt="Filé Salada" />
+          <div class="card-content">
+            <h3>Filé Tudo</h3>
+            <p>Pão Francês, Filé, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p>
+            <div class="price">R$ 42,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Patrão" data-price="44.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://portalbelohorizonte.com.br/sites/default/files/arquivos/comer-e-beber/2025-02/x-3.jpg" alt="Filé Patrão" />
+          <div class="card-content">
+            <h3> Filé Patrão</h3>
+            <p>Pão Francês, Filé, Ovo, Batata Palha, Queijo, Cebola Caramelizada e Salada.</p>
+            <div class="price">R$ 44,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Filé Egg" data-price="38.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://alemaolanches.festzap.com.br/_core/_uploads//2022/05/1042140522heaff957ga.jpg" alt="Filé Egg" />
+          <div class="card-content">
+            <h3>Filé Egg</h3>
+            <p>Pão Francês, Filé, Presunto, Queijo, Ovo e Salada.</p>
+            <div class="price">R$ 38,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Batata ">
-      <div class="card-content">
-        <h3>Batata Frita</h3>
-        <p>Bacon, Queijo e Catupiry.</p>
-        <div class="price">Meia: R$ 40,00 / Inteira: R$ 50,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Bacon Queijo Catupiry - Meia" data-price="40.00">Meia</button>
-          <button class="btn-add" data-name="Batata Bacon Queijo Catupiry - Inteira" data-price="50.00">Inteira</button>
+    <section id="lanche-frango">
+      <h2>Lanche de Frango</h2>
+      <div class="cards">
+        <div class="card" data-name="Frango Bacon" data-price="30.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://d1muf25xaso8hp.cloudfront.net/https://img.criativodahora.com.br/2024/04/criativo-6618e9cfc7ddbimg-2024-04-126618e9cfc7de06618e9cfc7de1.jpeg?w=1000&h=&auto=compress&dpr=1&fit=max" alt="Frango Bacon" />
+          <div class="card-content">
+            <h3>Frango Bacon</h3>
+            <p>Pâo Francês, Frango, Bacon, Presunto, Queijo e salada.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Queijo" data-price="30.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRiqtiCUopT2wklqr7hcpWwNWSCQZ-igc7TVw&s" alt="Frango Queijo" />
+          <div class="card-content">
+            <h3>Frango Queijo</h3>
+            <p>Pâo Francês, Frango, Queijo e Tomate.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Salada" data-price="30.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://www.seara.com.br/wp-content/uploads/2025/09/hamburguer_de_frango.webp" alt="Frango Salada" />
+          <div class="card-content">
+            <h3>Frango Salada</h3>
+            <p>Pâo Francês, Frango, Presento, Queijo e Salada.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Tudo" data-price="35.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSag2yQi3sJzUNhpaMaYX-sqKB0zQAgBFOBJg&s" alt="Frango Tudo" />
+          <div class="card-content">
+            <h3>Frango Tudo</h3>
+            <p>Pâo Francês, Frango, Presunto, Queijo, Ovo, Bacon, Salsicha e Salada.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Egg" data-price="31.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://imagens.jotaja.com/produtos/06a09714-c050-462d-80a1-de91c8631add.jpg" alt="Frango Egg" />
+          <div class="card-content">
+            <h3>Frango Egg</h3>
+            <p>Pâo Francês, Frango, Ovo, Presunto, Queijo e Salada.</p>
+            <div class="price">R$ 31,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Cubano" data-price="35.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://content.paodeacucar.com/wp-content/uploads/2019/08/Hamburguer-de-Salm%C3%A3o-1.jpg" alt="Frango Cubano" />
+          <div class="card-content">
+            <h3>Frango Cubano</h3>
+            <p>Pâo Francês, Frango, Queijo, Catupiry, Batata Palha e Salada.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Frango Catupiry" data-price="32.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbs2xN_EVL-PMYkwtMkMU5tCMRv3MLZBfmnA&s" alt="Frango Catupiry" />
+          <div class="card-content">
+            <h3>Frango Catupiry</h3>
+            <p>Pâo Francês, Frango, Catupiry, Queijo, Milho e Salada.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Batata Mulecada">
-      <div class="card-content">
-        <h3>Batata Mulecada</h3>
-        <p>Bacon, Queijo, cheddar e catupiry — diversão garantida!</p>
-        <div class="price">Meia: R$ 58,00 / Inteira: R$ 68,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Mulecada - Meia" data-price="58.00">Meia</button>
-          <button class="btn-add" data-name="Batata Mulecada - Inteira" data-price="68.00">Inteira</button>
+    <section id="jantinha">
+      <h2>Jantinhas</h2>
+      <div class="cards">
+        <div class="card" data-name="Jantinha de filé" data-price="63.99">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYJLjIbXab7XkHOFcgMEiNBx7WYQEhH403Yg&s" alt="jantinha de filé" />
+          <div class="card-content">
+            <h3>Jantinha de filé</h3>
+            <p>Arroz, feijão, carne, salada, batata frita com catupiry e bacon.</p>
+            <div class="price">R$ 63,99</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="jantinha frango cremoso" data-price="63.99">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBkzlRI02RFlfNA7T7xZJr1iieJSMPeVF-Ww&s" alt="jantinha frango cremoso" />
+          <div class="card-content">
+            <h3>jantinha frango cremoso</h3>
+            <p>Arroz, feijão, frango com catupiry, salada, batata frita com catupiry e bacon.</p>
+            <div class="price">R$ 63,99</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Jantinha de Tilápia" data-price="70.00">
+          <span class="img-info">Imagem ilustrativa</span>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmfXxbPBJ0fBwgIaVkIzfSO0Xz4bWU-jc9oQ&s" alt="jantinha de Tilápia" />
+          <div class="card-content">
+            <h3>jantinha de Tilápia</h3>
+            <p>Arroz, feijão, Tilápia, salada, batata frita com catupiry e bacon.</p>
+            <div class="price">R$ 70,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Batata Vulcão">
-      <div class="card-content">
-        <h3>Batata Vulcão</h3>
-        <p>Bacon, Queijo, catupiry, cheddar, filé e frango.</p>
-        <div class="price">Meia: R$ 65,00 / Inteira: R$ 85,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Vulcão - Meia" data-price="65.00">Meia</button>
-          <button class="btn-add" data-name="Batata Vulcão - Inteira" data-price="85.00">Inteira</button>
+    <section id="Linha-Smash">
+      <h2>Smash</h2>
+      <div class="cards">
+        <div class="card" data-name="Smash Kids" data-price="15.00">
+          <div class="card-content">
+            <h3>Smash kids </h3>
+            <p>Pão de brioche, Hambúrguer Smash e cheddar.</p>
+            <div class="price">R$ 15,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Smash geleia pimenta" data-price="18.00">
+          <div class="card-content">
+            <h3>Smash geleia pimenta</h3>
+            <p>Pão de brioche, geleia de pimenta,hambúrguer Smash, cebola roxa, 4 fatias de tomate, 1 fatia de Mussarela e alface.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Smash Duplo" data-price="30.00">
+          <div class="card-content">
+            <h3>Smash Duplo</h3>
+            <p>Pão de brioche, 2 hambúrguer smash, cebola com bacon, Barbecue e queijo cheddar.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Smash Caipira" data-price="30.00">
+          <div class="card-content">
+            <h3>Smash Caipira</h3>
+            <p>Pão de brioche, 2 hambúrguer smash, queijo, Catupiry,Batata palha, bacon.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Batata Vulcão Big">
-      <div class="card-content">
-        <h3>Batata Vulcão Big</h3>
-        <p>Bacon, Queijo, Filé, Frango, catupiry e cheddar.</p>
-        <div class="price">Inteira: R$ 140,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Batata Vulcão Big - Inteira" data-price="140.00">Inteira</button>
+    <section id="linha-gourmet">
+      <h2>Linha Gourmet</h2>
+      <div class="cards">
+        <div class="card" data-name="Boi Bandido" data-price="38.00">
+          <div class="card-content">
+            <h3>Boi Bandido</h3>
+            <p>Pão de Brioche, 3 Hambúrgueres de 130g, Cebola Caramelizada, Catupiry ou Cheddar, Salada, Queijo e Bacon.</p>
+            <div class="price">R$ 38,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Boi Caipira" data-price="28.00">
+          <div class="card-content">
+            <h3>Boi Caipira</h3>
+            <p>Pão de Brioche, Hambúrguer de 130g, Batata Palha, Bacon, Queijo e Catupiry.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mimosa Cheddar" data-price="29.00">
+          <div class="card-content">
+            <h3>Mimosa Cheddar</h3>
+            <p>Pão de Brioche, Hambúrguer de 130g, Cebola Caramelizada, Bacon, Queijo e Cheddar.</p>
+            <div class="price">R$ 29,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Bezerro Louco" data-price="30.00">
+          <div class="card-content">
+            <h3>Bezerro Louco</h3>
+            <p>Pão de Brioche, 2 Hambúrgueres de 130g, Cebola Caramelizada, Bacon, Queijo e Barbecue.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Bezerro Atolado" data-price="40.00">
+          <div class="card-content">
+            <h3>Bezerro Atolado</h3>
+            <p>Pão de Brioche, 2 Hambúrgueres de 130g, 1 Hambúrguer de Mandioca, Salada, Cebola, Tomate picado e Queijo.</p>
+            <div class="price">R$ 40,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Furioso" data-price="30.00">
+          <div class="card-content">
+            <h3>Furioso</h3>
+            <p>Pão de Brioche, Hambúrguer 200g, Bacon, Queijo e Catupiry.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Xerife" data-price="32.00">
+          <div class="card-content">
+            <h3>Xerife</h3>
+            <p>Pão de Brioche, 2 Hambúrgueres de Pimenta, Bacon, Cheddar, Queijo, Cebola Roxa e Salada.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Lenda" data-price="25.00">
+          <div class="card-content">
+            <h3>Lenda</h3>
+            <p>Pão de Brioche, Hambúrguer de carne 80g, hambúrguer de linguiça 80g, Bacon, Queijo e Salada.</p>
+            <div class="price">R$ 25,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Snack Cheddar" data-price="20.00">
+          <div class="card-content">
+            <h3>Snack Cheddar</h3>
+            <p>Pão de Brioche, Hambúrguer 80g, Cheddar, Queijo e Salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Snack Catupiry" data-price="20.00">
+          <div class="card-content">
+            <h3>Snack Catupiry</h3>
+            <p>Pão de Brioche, Hambúrguer, Catupiry, Queijo e Salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mexicano" data-price="32.00">
+          <div class="card-content">
+            <h3>Mexicano</h3>
+            <p>Pão de Brioche, Hambúrguer de Pimenta de 150g, Doritos, Cebola Caramelizada, Cheddar, Salada, Queijo e Bacon.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Picanha Gourmet" data-price="30.00">
+          <div class="card-content">
+            <h3>X- Picanha Gourmet</h3>
+            <p>Pão de Brioche, 2 hambúrgueres de Picanha, Cebola Roxa, Molho Especial, Mussarela e salada.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Costela" data-price="32.00">
+          <div class="card-content">
+            <h3>X-Costela</h3>
+            <p>Pão Francês, 2 hambúrgueres de Costela, Cebola no Shoyo, Bacon, Mussarela e Tomate.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="X-Predileto Gourmet" data-price="30.00">
+          <div class="card-content">
+            <h3>X-Predileto Gourmet</h3>
+            <p>Pão de Brioche, Bacon, 2 hambúrgueres Bovinos Tradicional, Molho Barbecue e Salada.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Zé Vaqueiro" data-price="40.00">
+          <div class="card-content">
+            <h3>Zé Vaqueiro</h3>
+            <p>Pão Francês, Filé, Calabresa, Ovo, Cebola, Milho, Queijo e Salada.</p>
+            <div class="price">R$ 40,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Burguer" data-price="20.00">
+          <div class="card-content">
+            <h3>Costela Burguer</h3>
+            <p>Pão, Hambúrguer de costela, Queijo, Presunto, e Molho Especial.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Salada" data-price="22.00">
+          <div class="card-content">
+            <h3>Costela Salada</h3>
+            <p>Pão, Hambúrguer de Costela, Queijo, Presunto, Tomate, Alface, ou Rúcula e Molho Especial.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Egg" data-price="25.00">
+          <div class="card-content">
+            <h3>Costela Egg</h3>
+            <p>Pão, Hambúrguer de Costela, Bacon, Ovo, Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 25,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Tudo" data-price="35.00">
+          <div class="card-content">
+            <h3>Costela Tudo</h3>
+            <p>Pão, Hambúrguer de Costela, Bacon, Calabresa, Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Costela Duplo" data-price="42.00">
+          <div class="card-content">
+            <h3>Costela Duplo</h3>
+            <p>Pão, 2 Hambúrgueres de Costela, 2 Ovos, Calabresa Queijo, Presunto, Alface ou Rúcula e molho Especial.</p>
+            <div class="price">R$ 42,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção de Frango">
-      <div class="card-content">
-        <h3>Porção de Frango</h3>
-        <p>Frango, Tomate, Cebola, Bacon e Pão Francês.</p>
-        <div class="price">Inteira: R$ 55,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção de Frango - Inteira" data-price="55.00">Inteira</button>
+    <section id="linhas-especiais">
+      <h2>Linhas Especiais</h2>
+      <div class="cards">
+        <div class="card" data-name="Saladinha Pops" data-price="20.00">
+          <div class="card-content">
+            <h3>Saladinha Pops</h3>
+            <p>Pão de Hambúrguer, 3 Hambúrgueres, Salada, Presunto, Queijo e Batata Palha.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Americano" data-price="25.00">
+          <div class="card-content">
+            <h3>Americano</h3>
+            <p>Pão de Hambúrguer, 3 Ovos, 4 Fatias de Presunto, Queijo e Salada.</p>
+            <div class="price">R$ 25,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Vegetariano" data-price="22.00">
+          <div class="card-content">
+            <h3>Vegetariano</h3>
+            <p>Pão de Hambúrguer, 2 Ovos, Queijo, Catupiry e Salada.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Misto Quente" data-price="25.00">
+          <div class="card-content">
+            <h3>Misto Quente</h3>
+            <p>Pão de Hambúrguer, Presunto, Queijo e Tomate.</p>
+            <div class="price">R$ 25,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Tri Tudo" data-price="37.00">
+          <div class="card-content">
+            <h3>Tri Tudo</h3>
+            <p>Pão de Hambúrguer, 3 Hambúrgueres, 3 Ovos, 3 Salsichas, 3 Fatias de Presunto, Queijo, Bacon e Salada.</p>
+            <div class="price">R$ 37,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="FBB" data-price="35.00">
+          <div class="card-content">
+            <h3>FBB</h3>
+            <p>Pão Francês, Frango, Bacon, Brócolis, Catupiry e Salada.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Especial da Casa" data-price="47.00">
+          <div class="card-content">
+            <h3>Especial da Casa</h3>
+            <p>Pão de Hambúrguer, Hambúrguer, Filé, Frango, Ovo, Bacon, Salsicha, Presunto, Queijo, Catupiry, Batata Palha e Salada.</p>
+            <div class="price">R$ 47,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Especial da Casa 2 Pães" data-price="85.00">
+          <div class="card-content">
+            <h3>Especial da Casa 2 Pães</h3>
+            <p>2 pães de Hambúrguer, Hambúrguer, Filé, Frango, Ovo, Bacon, Salsicha, Presunto, Queijo, Catupiry, Batata Palha e Salada.</p>
+            <div class="price">R$ 85,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção de Frango com Catupiry">
-      <div class="card-content">
-        <h3>Porção de Frango c/ Catupiry</h3>
-        <p>Frango acebolado com catupiry e pão Francês.</p>
-        <div class="price">Inteira: R$ 60,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção de Frango c/ Catupiry - Inteira" data-price="60.00">Inteira</button>
+    <section id="hot-dog">
+      <h2>Hot Dog</h2>
+      <div class="cards">
+        <div class="card" data-name="Hot Dog" data-price="12.00">
+          <div class="card-content">
+            <h3>Hot Dog</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Ketchup e Maionese.</p>
+            <div class="price">R$ 12,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Milho" data-price="14.00">
+          <div class="card-content">
+            <h3>Hot Milho</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Milho, Ketchup e Maionese.</p>
+            <div class="price">R$ 14,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Milho Especial" data-price="20.00">
+          <div class="card-content">
+            <h3>Hot Milho Especial</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Milho, Ketchup e Maionese.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Duplo" data-price="16.00">
+          <div class="card-content">
+            <h3>Hot Duplo</h3>
+            <p>Pão, Salada, Batata Palha, 4 Salsichas, Ketchup e Maionese.</p>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Especial" data-price="17.00">
+          <div class="card-content">
+            <h3>Hot Especial</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Ketchup e Maionese.</p>
+            <div class="price">R$ 17,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Catupiry e Queijo" data-price="26.00">
+          <div class="card-content">
+            <h3>Hot Catupiry e Queijo</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon, Catupiry e Queijo.</p>
+            <div class="price">R$ 26,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Presunto e Queijo" data-price="18.00">
+          <div class="card-content">
+            <h3>Hot Presunto e Queijo</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Presunto, Queijo, Ketchup e Maionese.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Mineiro" data-price="20.00">
+          <div class="card-content">
+            <h3>Hot Mineiro</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Queijo, e Catupiry.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Frango" data-price="18.00">
+          <div class="card-content">
+            <h3>Hot Frango</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Frango, Maionese e Ketchup.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Dog Batatinha" data-price="20.00">
+          <div class="card-content">
+            <h3>Dog Batatinha</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Ovo, Presunto, Queijo, Ketchup e Maionese.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Dogão" data-price="34.00">
+          <div class="card-content">
+            <h3>Dogão</h3>
+            <p>Pão, Salada, 3 Hambúrgueres, 2 Salsichas, Bacon, Presunto, Queijo e Catupiry.</p>
+            <div class="price">R$ 34,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer" data-price="17.00">
+          <div class="card-content">
+            <h3>Hot Burguer</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Ketchup e Maionese.</p>
+            <div class="price">R$ 17,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer Duplo" data-price="18.00">
+          <div class="card-content">
+            <h3>Hot Burguer Duplo</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, 2 Hambúrgueres, Ketchup e Maionese.</p>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer Triplo" data-price="22.00">
+          <div class="card-content">
+            <h3>Hot Burguer Triplo</h3>
+            <p>Pão, Salada, Batata Palha, 3 Salsichas, 3 Hambúrgueres, Ketchup e Maionese.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer Bacon" data-price="22.00">
+          <div class="card-content">
+            <h3>Hot Burguer Bacon</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Bacon, Ketchup e Maionese.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer Queijo" data-price="22.00">
+          <div class="card-content">
+            <h3>Hot Burguer Queijo</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Queijo, Ketchup e Maionese.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Tradicional" data-price="15.00">
+          <div class="card-content">
+            <h3>Hot Tradicional</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Milho, Queijo, Ketchup, Mostarda e Maionese.</p>
+            <div class="price">R$ 15,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Frango Catupiry" data-price="23.00">
+          <div class="card-content">
+            <h3>Hot Frango Catupiry</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Frango e Catupiry.</p>
+            <div class="price">R$ 23,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Burguer Catupiry" data-price="22.00">
+          <div class="card-content">
+            <h3>Hot Burguer Catupiry</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Queijo e Catupiry.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Cheddar" data-price="22.00">
+          <div class="card-content">
+            <h3>Hot Cheddar</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Bacon e Cheddar.</p>
+            <div class="price">R$ 22,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot Tudo" data-price="47.00">
+          <div class="card-content">
+            <h3>Hot Tudo</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsicha, Hambúrguer, Frango, Carne, Bacon, Ovo, Queijo, Cheddar e Catupiry.</p>
+            <div class="price">R$ 47,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Hot da Casa" data-price="34.00">
+          <div class="card-content">
+            <h3>Hot da Casa</h3>
+            <p>Pão, Salada, Batata Palha, 2 Salsichas, Hambúrguer, Bacon, Calabresa, Queijo e Catupiry.</p>
+            <div class="price">R$ 34,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção de Filé">
-      <div class="card-content">
-        <h3>Porção de Filé</h3>
-        <p>Filé, Cebola, Tomate e Pão Francês.</p>
-        <div class="price">Inteira: R$ 60,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção de Filé - Inteira" data-price="60.00">Inteira</button>
+    <section id="porcao-na-tabua">
+      <h2>Porção na Tábua</h2>
+      <div class="cards">
+        <div class="card" data-name="Porção Contra fíle na tábua " data-price="80.00">
+          <div class="card-content">
+            <h3>Contra fíle na tábua</h3>
+            <p>Contra fíle, batata frita, cebola, torrada e tomate.</p>
+            <div class="price">R$ 80,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Frango na tábua" data-price="60.00">
+          <div class="card-content">
+            <h3>Frango na tábua</h3>
+            <p>Frango, batata frita, torrada, cebola e tomate .</p>
+            <div class="price">R$ 60,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Frango e catupiry na tábua" data-price="70.00">
+          <div class="card-content">
+            <h3>Frango e catupiry na tábua</h3>
+            <p>Frango com catupiry, batata frita, torrada, cebola e tomate.</p>
+            <div class="price">R$ 70,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Frango com bacon na tábua" data-price="75.00">
+          <div class="card-content">
+            <h3>Frango com bacon na tábua</h3>
+            <p>Frango, bacon, batata frita, torrada, cebola e tomate.</p>
+            <div class="price">R$ 75,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Calabresa na tábua" data-price="60.00">
+          <div class="card-content">
+            <h3>Calabresa na tábua</h3>
+            <p>Calabresa, batata frita, cebola e tomate.</p>
+            <div class="price">R$ 60,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Mista na tábua" data-price="80.00">
+          <div class="card-content">
+            <h3>Mista na tábua</h3>
+            <p>Bacon, calabresa, frango, filé, batata frita, torrada, cebola e tomate.</p>
+            <div class="price">R$ 80,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Mista com catupiry na tábua" data-price="90.00">
+          <div class="card-content">
+            <h3>Mista com catupiry na tábua</h3>
+            <p>Bacon, calabresa, frango, filé, catupiry, batata frita, torrada, cebola e tomate.</p>
+            <div class="price">R$ 90,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção Mista">
-      <div class="card-content">
-        <h3>Porção Mista</h3>
-        <p>Filé, Calabresa, Tomate, Cebola, Bacon, Frango e Pão Francês.</p>
-        <div class="price">Inteira: R$ 65,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção Mista - Inteira" data-price="65.00">Inteira</button>
+    <section id="batatas-recheadas">
+      <h2>Batatas Recheadas</h2>
+      <div class="cards">
+        <div class="card" data-name="Batata Recheada Sabor Pizza" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Pizza</h3>
+            <p>Purê, presunto, Queijo, Tomate, Azeitona, Milho, Catupiry, e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name=" Batata Recheada Sabor Brócolis" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Brócolis</h3>
+            <p>Purê, Brócolis, Catupiry, Queijo, Bacon e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Carne seca" data-price="35.00">
+          <div class="card-content">
+            <h3>Batata Recheada Carne Seca</h3>
+            <p>Purê, Carne Seca, Catupiry, Queijo, e Batata Palha.</p>
+            <div class="price">R$ 35,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Carne e queijo" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Carne e queijo</h3>
+            <p>Purê, Filé, Catupiry, Queijo, e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Hot Burguer" data-price="30.00">
+          <div class="card-content">
+            <h3> Batata Recheada Hot Burguer</h3>
+            <p>Purê, Salsicha, Hambúrguer, Tomate, Bacon, Catupiry, Queijo e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Frango Catupiry" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Frango Catupiry</h3>
+            <p>Purê, Frango, Milho, Catupiry, Queijo e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Frango Bacon" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Frango Bacon</h3>
+            <p>Purê, Frango, Bacon, Catupiry, Queijo e Batata Palha.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Recheada Sabor Calabresa Cremosa" data-price="30.00">
+          <div class="card-content">
+            <h3>Batata Recheada Calabresa Cremosa</h3>
+            <p>Purê, Calabresa, Tomate, Cebola e Catupiry.</p>
+            <div class="price">R$ 30,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção Mista com Catupiry">
-      <div class="card-content">
-        <h3>Porção Mista com Catupiry</h3>
-        <p>Filé, Calabresa, Tomate, Cebola, Bacon, Frango, Catupiry e Pão Francês.</p>
-        <div class="price">Inteira: R$ 75,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção Mista com Catupiry - Inteira" data-price="75.00">Inteira</button>
+    <section id="omeletes">
+      <h2>Omeletes</h2>
+      <div class="cards">
+        <div class="card" data-name="Omelete de carne" data-price="28.00">
+          <div class="card-content">
+            <h3>Carne</h3>
+            <p>4 ovos, Carne, Queijo, e Catupiry.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Omelete de Pizza" data-price="28.00">
+          <div class="card-content">
+            <h3>Pizza</h3>
+            <p>4 ovos, presunto, Queijo, Tomate, Azeitona, Milho e Catupiry</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Omelete Carne seca" data-price="31.00">
+          <div class="card-content">
+            <h3>Carne seca</h3>
+            <p>4 ovos, Carne Seca, Catupiry e queijo.</p>
+            <div class="price">R$ 31,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Omelete Brócolis" data-price="28.00">
+          <div class="card-content">
+            <h3>Brócolis</h3>
+            <p>4 ovos, Brócolis, Catupiry, Bacon, e Queijo</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Omelete Frango" data-price="28.00">
+          <div class="card-content">
+            <h3>Frango</h3>
+            <p>4 ovos, Frango, Milho, Catupiry e queijo.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Omelete Calabresa" data-price="28.00">
+          <div class="card-content">
+            <h3>Calabresa</h3>
+            <p>4 ovos, Calabresa e tomate.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção de Calabresa">
-      <div class="card-content">
-        <h3>Porção de Calabresa</h3>
-        <p>Calabresa acebolada, Bacon e Pão Francês.</p>
-        <div class="price">Inteira: R$ 50,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção de Calabresa - Inteira" data-price="50.00">Inteira</button>
+    <section id="mata-fome">
+      <h2>Mata Fome</h2>
+      <div class="cards">
+        <div class="card" data-name="Mata Fome" data-price="17.00">
+          <div class="card-content">
+            <h3>Mata Fome</h3>
+            <p>Pão de Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon e Salada.</p>
+            <div class="price">R$ 17,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mata Fome Especial" data-price="20.00">
+          <div class="card-content">
+            <h3>Mata Fome Especial</h3>
+            <p>Pão de Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon, Salsicha e Salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Mata Fome Burguer" data-price="20.00">
+          <div class="card-content">
+            <h3>Mata Fome Burguer</h3>
+            <p>Pão de Hambúrguer, Hambúrguer, 2 Queijos, 2 Presuntos, Ovo, Bacon e Salada.</p>
+            <div class="price">R$ 20,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Porção de Tilápia">
-      <div class="card-content">
-        <h3>Porção de Tilápia</h3>
-        <p>Tilápia e Fritas.</p>
-        <div class="price">Inteira: R$ 70,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Porção de Tilápia - Inteira" data-price="70.00">Inteira</button>
+    <section id="porcoes">
+      <h2>Porções</h2>
+      <div class="cards">
+
+        <div class="card" data-name="Batata Frita">
+          <div class="card-content">
+            <h3>Batata Frita</h3>
+            <div class="price">Meia: R$ 24,00 / Inteira: R$ 32,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Frita - Meia" data-price="24.00">Meia</button>
+              <button class="btn-add" data-name="Batata Frita - Inteira" data-price="32.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Frita Bacon e Queijo">
+          <div class="card-content">
+            <h3>Batata Frita</h3>
+            <p>Bacon e Queijo.</p>
+            <div class="price">Meia: R$ 32,00 / Inteira: R$ 40,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Frita Bacon e Queijo - Meia" data-price="32.00">Meia</button>
+              <button class="btn-add" data-name="Batata Frita Bacon e Queijo - Inteira" data-price="40.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata ">
+          <div class="card-content">
+            <h3>Batata Frita</h3>
+            <p>Bacon, Queijo e Catupiry.</p>
+            <div class="price">Meia: R$ 40,00 / Inteira: R$ 50,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Bacon Queijo Catupiry - Meia" data-price="40.00">Meia</button>
+              <button class="btn-add" data-name="Batata Bacon Queijo Catupiry - Inteira" data-price="50.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Mulecada">
+          <div class="card-content">
+            <h3>Batata Mulecada</h3>
+            <p>Bacon, Queijo, cheddar e catupiry — diversão garantida!</p>
+            <div class="price">Meia: R$ 58,00 / Inteira: R$ 68,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Mulecada - Meia" data-price="58.00">Meia</button>
+              <button class="btn-add" data-name="Batata Mulecada - Inteira" data-price="68.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Vulcão">
+          <div class="card-content">
+            <h3>Batata Vulcão</h3>
+            <p>Bacon, Queijo, catupiry, cheddar, filé e frango.</p>
+            <div class="price">Meia: R$ 65,00 / Inteira: R$ 85,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Vulcão - Meia" data-price="65.00">Meia</button>
+              <button class="btn-add" data-name="Batata Vulcão - Inteira" data-price="85.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Batata Vulcão Big">
+          <div class="card-content">
+            <h3>Batata Vulcão Big</h3>
+            <p>Bacon, Queijo, Filé, Frango, catupiry e cheddar.</p>
+            <div class="price">Inteira: R$ 140,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Batata Vulcão Big - Inteira" data-price="140.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção de Frango">
+          <div class="card-content">
+            <h3>Porção de Frango</h3>
+            <p>Frango, Tomate, Cebola, Bacon e Pão Francês.</p>
+            <div class="price">Inteira: R$ 55,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção de Frango - Inteira" data-price="55.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção de Frango com Catupiry">
+          <div class="card-content">
+            <h3>Porção de Frango c/ Catupiry</h3>
+            <p>Frango acebolado com catupiry e pão Francês.</p>
+            <div class="price">Inteira: R$ 60,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção de Frango c/ Catupiry - Inteira" data-price="60.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção de Filé">
+          <div class="card-content">
+            <h3>Porção de Filé</h3>
+            <p>Filé, Cebola, Tomate e Pão Francês.</p>
+            <div class="price">Inteira: R$ 60,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção de Filé - Inteira" data-price="60.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Mista">
+          <div class="card-content">
+            <h3>Porção Mista</h3>
+            <p>Filé, Calabresa, Tomate, Cebola, Bacon, Frango e Pão Francês.</p>
+            <div class="price">Inteira: R$ 65,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção Mista - Inteira" data-price="65.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção Mista com Catupiry">
+          <div class="card-content">
+            <h3>Porção Mista com Catupiry</h3>
+            <p>Filé, Calabresa, Tomate, Cebola, Bacon, Frango, Catupiry e Pão Francês.</p>
+            <div class="price">Inteira: R$ 75,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção Mista com Catupiry - Inteira" data-price="75.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção de Calabresa">
+          <div class="card-content">
+            <h3>Porção de Calabresa</h3>
+            <p>Calabresa acebolada, Bacon e Pão Francês.</p>
+            <div class="price">Inteira: R$ 50,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção de Calabresa - Inteira" data-price="50.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Porção de Tilápia">
+          <div class="card-content">
+            <h3>Porção de Tilápia</h3>
+            <p>Tilápia e Fritas.</p>
+            <div class="price">Inteira: R$ 70,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Porção de Tilápia - Inteira" data-price="70.00">Inteira</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-name="Tira Gostos">
+          <div class="card-content">
+            <h3>Tira Gostos</h3>
+            <p>Mussarela, Presunto, Salsicha, Tomate, Salame e Azeitona.</p>
+            <div class="price">Inteira: R$ 40,00</div>
+            <div class="btn-group">
+              <button class="btn-add" data-name="Tira Gostos - Inteira" data-price="40.00">Inteira</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-name="Tira Gostos">
-      <div class="card-content">
-        <h3>Tira Gostos</h3>
-        <p>Mussarela, Presunto, Salsicha, Tomate, Salame e Azeitona.</p>
-        <div class="price">Inteira: R$ 40,00</div>
-        <div class="btn-group">
-          <button class="btn-add" data-name="Tira Gostos - Inteira" data-price="40.00">Inteira</button>
+    <section id="recheadinhos">
+      <h2>Recheadinhos</h2>
+      <div class="cards">
+        <div class="card" data-name=" Recheadinho Carne Seca" data-price="32.00">
+          <div class="card-content">
+            <h3> Recheadinho Carne Seca</h3>
+            <p>Mandioca, carne seca, catupiry e salada.</p>
+            <div class="price">R$ 32,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name=" Recheadinho Milho Catupiry" data-price="28.00">
+          <div class="card-content">
+            <h3> Recheadinho Milho Catupiry</h3>
+            <p>Mandioca, milho, catupiry e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name=" Recheadinho Carne e Queijo" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Carne e Queijo</h3>
+            <p>Mandioca, carne, queijo, catupiry e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name=" Recheadinho Frango Catupiry" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Frango Catupiry</h3>
+            <p>Mandioca, frango, catupiry, bacon e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Recheadinho Pizza" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Pizza</h3>
+            <p>Mandioca, presunto, queijo, catupiry, orégano e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Recheadinho Brócolis" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Brócolis</h3>
+            <p>Mandioca, brócolis, bacon, catupiry e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name=" Recheadinho Hambúrguer" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Hambúrguer</h3>
+            <p>Mandioca, hambúrguer, bacon, catupiry, cebola e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Recheadinho Portuguesa" data-price="28.00">
+          <div class="card-content">
+            <h3>Recheadinho Portuguesa</h3>
+            <p>Mandioca, presunto, queijo, ovo, calabresa, catupiry e salada.</p>
+            <div class="price">R$ 28,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
         </div>
       </div>
+    </section>
+
+    <section id="bebidas">
+      <h2>Bebidas</h2>
+      <div class="cards">
+        <div class="card" data-name="Skol 600ml" data-price="12.00">
+          <div class="card-content">
+            <h3>Skol (600ml)</h3>
+            <div class="price">R$ 12,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Bohemia 600ml" data-price="12.00">
+          <div class="card-content">
+            <h3>Bohemia (600ml)</h3>
+            <div class="price">R$ 12,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Brahma 600ml" data-price="12.00">
+          <div class="card-content">
+            <h3>Brahma (600ml)</h3>
+            <div class="price">R$ 12,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Original 600ml" data-price="15.00">
+          <div class="card-content">
+            <h3>Original (600ml)</h3>
+            <div class="price">R$ 15,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Spaten 600ml" data-price="16.00">
+          <div class="card-content">
+            <h3>Spaten (600ml)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Heineken 600ml" data-price="16.00">
+          <div class="card-content">
+            <h3>Heineken (600ml)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Heineken Long Neck" data-price="10.00">
+          <div class="card-content">
+            <h3>Heineken (Long Neck)</h3>
+            <div class="price">R$ 10,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Chopp de Vinho" data-price="16.00">
+          <div class="card-content">
+            <h3>Chopp de Vinho</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Coca-Cola 2L" data-price="16.00">
+          <div class="card-content">
+            <h3>Coca-Cola (2L)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Antarctica 2L" data-price="16.00">
+          <div class="card-content">
+            <h3>Antarctica (2L)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Sprite 2L" data-price="16.00">
+          <div class="card-content">
+            <h3>Sprite (2L)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Fanta 2L" data-price="16.00">
+          <div class="card-content">
+            <h3>Fanta (2L)</h3>
+            <div class="price">R$ 16,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Poty 2L" data-price="10.00">
+          <div class="card-content">
+            <h3>Poty 2L</h3>
+            <div class="price">R$ 10,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Jaboti 2L" data-price="10.00">
+          <div class="card-content">
+            <h3>Jaboti 2L</h3>
+            <div class="price">R$ 10,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Suco Natural Laranja 1L" data-price="18.00">
+          <div class="card-content">
+            <h3>Suco Natural de Laranja (1L)</h3>
+            <div class="price">R$ 18,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+
+        <div class="card" data-name="Del Valle 1L" data-price="10.00">
+          <div class="card-content">
+            <h3>Del Valle (1L)</h3>
+            <div class="price">R$ 10,00</div>
+            <button class="btn-add">Adicionar ao Carrinho</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Carrinho de Compras -->
+  <div id="cart-panel" aria-label="Painel do carrinho de compras" aria-hidden="true">
+    <div id="cart-header">
+      <h2>Carrinho</h2>
+      <button id="cart-close" aria-label="Fechar carrinho">&times;</button>
     </div>
 
+    <div id="cart-items">
+      <p>Seu carrinho está vazio.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="client-name">Seu Nome:</label>
+      <input type="text" id="client-name" placeholder="Digite seu nome completo">
+    </div>
+
+    <div id="cart-footer">
+      <h3>Forma de Pagamento</h3>
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="payment" value="Cartão" onchange="toggleFields()"> Cartão
+        </label>
+        <label>
+          <input type="radio" name="payment" value="dinheiro" onchange="toggleFields()"> Dinheiro
+        </label>
+        <label>
+          <input type="radio" name="payment" value="pix" onchange="toggleFields()"> Pix
+        </label>
+      </div>
+
+      <h3>Retirada</h3>
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="pickup" value="balcão" onchange="toggleFields()"> No Balcão
+        </label>
+        <label>
+          <input type="radio" name="pickup" value="delivery" onchange="toggleFields()"> Delivery
+        </label>
+      </div>
+
+      <div id="delivery-address" class="form-group" style="display: none;">
+        <label for="address">Endereço para entrega:</label>
+        <input type="text" id="address" placeholder="Digite seu endereço">
+      </div>
+
+      <div id="troco-container" class="form-group" style="display: none;">
+        <label for="troco">Precisa de troco? Se sim (pra quanto?)</label>
+        <input type="text" id="troco" placeholder="Ex: 100,00">
+      </div>
+
+      <div id="checkout-error" class="error-message" style="display: none;"></div>
+
+      <button type="button" id="checkout-btn" class="btn-add" onclick="iniciarCheckoutComRoleta()">Finalizar Pedido</button>
+    </div>
   </div>
-</section>
 
-<section id="recheadinhos">
-  <h2>Recheadinhos</h2>
-  <div class="cards">
+  <!-- Modal da Roleta da Sorte -->
+  <div id="modal-roleta" class="modal-roleta-overlay">
+    <div class="modal-roleta-content">
+      <span class="close-roleta-btn" onclick="fecharModalRoleta()">&times;</span>
+      <div class="roleta-topo"><span class="roleta-presente">🎁</span><div><h2>Roleta da Sorte!</h2><p>Gire para descobrir o seu <strong>prêmio especial!</strong></p></div><span class="roleta-coroa">👑</span></div>
 
-    <div class="card" data-name=" Recheadinho Carne Seca" data-price="32.00">
-      <div class="card-content">
-        <h3> Recheadinho Carne Seca</h3>
-        <p>Mandioca, carne seca, catupiry e salada.</p>
-        <div class="price">R$ 32,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
- 
-    <div class="card" data-name=" Recheadinho Milho Catupiry" data-price="28.00">
-      <div class="card-content">
-        <h3> Recheadinho Milho Catupiry</h3>
-        <p>Mandioca, milho, catupiry e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
+      <div class="roleta-container">
+        <div class="roleta-luzes" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="ponteiro"></div>
+        <div class="roleta" id="roleta-wheel">
+          <div class="roleta-divisoria d1"></div>
+          <div class="roleta-divisoria d2"></div>
+          <div class="roleta-divisoria d3"></div>
+          <div class="roleta-divisoria d4"></div>
+          <div class="roleta-divisoria d5"></div>
+          <div class="roleta-divisoria d6"></div>
+          <div class="roleta-divisoria d7"></div>
 
-    <div class="card" data-name=" Recheadinho Carne e Queijo" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Carne e Queijo</h3>
-        <p>Mandioca, carne, queijo, catupiry e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
+          <div class="roleta-setor s1">🏷️<br>R$ 1,00<br>DE DESCONTO</div>
+          <div class="roleta-setor s2">🏷️<br>R$ 4,00<br>DE DESCONTO</div>
+          <div class="roleta-setor s3">🥤<br>COCA-COLA<br>GRÁTIS</div>
+          <div class="roleta-setor s4">🍟<br>MEIA FRITAS<br>GRÁTIS</div>
+          <div class="roleta-setor s5">🏷️<br>R$ 15,00<br>DE DESCONTO</div>
+          <div class="roleta-setor s6">🏷️<br>R$ 20,00<br>DE DESCONTO</div>
+          <div class="roleta-setor s7">😅<br>NÃO FOI<br>DESSA VEZ</div>
 
-    <div class="card" data-name=" Recheadinho Frango Catupiry" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Frango Catupiry</h3>
-        <p>Mandioca, frango, catupiry, bacon e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Recheadinho Pizza" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Pizza</h3>
-        <p>Mandioca, presunto, queijo, catupiry, orégano e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Recheadinho Brócolis" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Brócolis</h3>
-        <p>Mandioca, brócolis, bacon, catupiry e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name=" Recheadinho Hambúrguer" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Hambúrguer</h3>
-        <p>Mandioca, hambúrguer, bacon, catupiry, cebola e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Recheadinho Portuguesa" data-price="28.00">
-      <div class="card-content">
-        <h3>Recheadinho Portuguesa</h3>
-        <p>Mandioca, presunto, queijo, ovo, calabresa, catupiry e salada.</p>
-        <div class="price">R$ 28,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
-
- <section id="bebidas">
-  <h2>Bebidas</h2>
-  <div class="cards">
-
-    <!-- Cervejas 600ml -->
-    <div class="card" data-name="Skol 600ml" data-price="12.00">
-      <div class="card-content">
-        <h3>Skol (600ml)</h3>
-        <div class="price">R$ 12,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Bohemia 600ml" data-price="12.00">
-      <div class="card-content">
-        <h3>Bohemia (600ml)</h3>
-        <div class="price">R$ 12,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Brahma 600ml" data-price="12.00">
-      <div class="card-content">
-        <h3>Brahma (600ml)</h3>
-        <div class="price">R$ 12,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Original 600ml" data-price="15.00">
-      <div class="card-content">
-        <h3>Original (600ml)</h3>
-        <div class="price">R$ 15,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Spaten 600ml" data-price="16.00">
-      <div class="card-content">
-        <h3>Spaten (600ml)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Heineken 600ml" data-price="16.00">
-      <div class="card-content">
-        <h3>Heineken (600ml)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <!-- Long Neck e Outras Cervejas -->
-    <div class="card" data-name="Heineken Long Neck" data-price="10.00">
-      <div class="card-content">
-        <h3>Heineken (Long Neck)</h3>
-        <div class="price">R$ 10,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <!-- Chopp de Vinho -->
-    <div class="card" data-name="Chopp de Vinho" data-price="16.00">
-      <div class="card-content">
-        <h3>Chopp de Vinho</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <!-- Refrigerantes 2L -->
-    <div class="card" data-name="Coca-Cola 2L" data-price="16.00">
-      <div class="card-content">
-        <h3>Coca-Cola (2L)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Antarctica 2L" data-price="16.00">
-      <div class="card-content">
-        <h3>Antarctica (2L)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Sprite 2L" data-price="16.00">
-      <div class="card-content">
-        <h3>Sprite (2L)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Fanta 2L" data-price="16.00">
-      <div class="card-content">
-        <h3>Fanta (2L)</h3>
-        <div class="price">R$ 16,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Poty 2L" data-price="10.00">
-      <div class="card-content">
-        <h3>Poty 2L</h3>
-        <div class="price">R$ 10,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Jaboti 2L" data-price="10.00">
-      <div class="card-content">
-        <h3>Jaboti 2L</h3>
-        <div class="price">R$ 10,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <!-- Sucos -->
-    <div class="card" data-name="Suco Natural Laranja 1L" data-price="18.00">
-      <div class="card-content">
-        <h3>Suco Natural de Laranja (1L)</h3>
-        <div class="price">R$ 18,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-    <div class="card" data-name="Del Valle 1L" data-price="10.00">
-      <div class="card-content">
-        <h3>Del Valle (1L)</h3>
-        <div class="price">R$ 10,00</div>
-        <button class="btn-add">Adicionar ao Carrinho</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-</main>
-  
-<div id="cart-panel" aria-label="Painel do carrinho de compras" aria-hidden="true">
-  <div id="cart-header">
-    <h2>Carrinho</h2>
-    <button id="cart-close" aria-label="Fechar carrinho">&times;</button>
-  </div>
-
-  <div id="cart-items">
-    <p>Seu carrinho está vazio.</p>
-  </div>
-
-  <div class="form-group">
-  <label for="client-name">Seu Nome:</label>
-  <input type="text" id="client-name" placeholder="Digite seu nome completo">
+         <div class="roleta-centro">
+  <img src="WhatsApp Image 2025-10-17 at 19.20.29.jpeg" alt="Alex Lanches">
 </div>
+        </div>
+      </div>
 
-  <div id="cart-footer">
-    <!-- Forma de Pagamento -->
-    <h3>Forma de Pagamento</h3>
-    <div class="radio-group">
-      <label>
-        <input type="radio" name="payment" value="Cartão" onchange="toggleFields()"> Cartão
-      </label>
-      <label>
-        <input type="radio" name="payment" value="dinheiro" onchange="toggleFields()"> Dinheiro
-      </label>
-      <label>
-        <input type="radio" name="payment" value="pix" onchange="toggleFields()"> Pix
-      </label>
+      <div class="premios-titulo"><span>👑</span> Possíveis prêmios</div>
+      <div class="premios-grid">
+        <div class="premio-card p1"><div class="icone">🏷️</div><div class="texto">R$ 1,00<br>de Desconto</div></div>
+        <div class="premio-card p2"><div class="icone">🏷️</div><div class="texto">R$ 4,00<br>de Desconto</div></div>
+        <div class="premio-card p3"><div class="icone">🥤</div><div class="texto">Coca-Cola<br>GRÁTIS</div></div>
+        <div class="premio-card p4"><div class="icone">🍟</div><div class="texto">Meia Fritas<br>GRÁTIS</div></div>
+        <div class="premio-card p5"><div class="icone">🏷️</div><div class="texto">R$ 15,00<br>de Desconto</div></div>
+        <div class="premio-card p6"><div class="icone">🏷️</div><div class="texto">R$ 20,00<br>de Desconto</div></div>
+        <div class="premio-card p7"><div class="icone">😅</div><div class="texto">Não foi<br>dessa vez!</div></div>
+      </div>
+
+      <button id="btn-girar-roleta" type="button" onclick="executarGiroRoleta()">Girar Agora!</button>
+
+      <div id="resultado-roleta"></div>
     </div>
-
-    <!-- Retirada -->
-    <h3>Retirada</h3>
-    <div class="radio-group">
-      <label>
-        <input type="radio" name="pickup" value="balcão" onchange="toggleFields()"> No Balcão
-      </label>
-      <label>
-        <input type="radio" name="pickup" value="delivery" onchange="toggleFields()"> Delivery
-      </label>
-    </div>
-
-    <!-- Endereço para entrega -->
-    <div id="delivery-address" class="form-group" style="display: none;">
-      <label for="address">Endereço para entrega:</label>
-      <input type="text" id="address" placeholder="Digite seu endereço">
-    </div>
-
-    <!-- Troco -->
-    <div id="troco-container" class="form-group" style="display: none;">
-      <label for="troco">Precisa de troco? Se sim (pra quanto?)</label>
-      <input type="text" id="troco" placeholder="Ex: 100,00">
-    </div>
-
-    <!-- Mensagem de erro -->
-    <div id="checkout-error" class="error-message" style="display: none;"></div>
-
-    <!-- Botão de finalização -->
-    <button id="checkout-btn" class="btn-add">Finalizar Pedido</button>
   </div>
-</div>
 
-
-
-
- <!-- Rodapé -->
+  <!-- Rodapé -->
   <footer>
     <p>© 2025 Alex Lanches — Todos os direitos reservados.</p>
     <div class="footer-content">
@@ -1611,23 +2203,465 @@
     </div>
   </footer>
 
-<button id="btn-top" title="Voltar ao topo">⬆</button>
-
-<div id="promo-modal" class="modal-overlay">
-  <div class="modal-content">
-    <span id="close-modal" class="close-btn">&times;</span>
-    <h2>🎁 Desconto Especial!</h2>
-    <p>Ganhe <strong>10% de desconto</strong> no seu pedido pelo site. Aproveite agora antes de finalizar a compra!</p>
-    <button id="btn-promo-ok">Garantir Desconto</button>
-  </div>
-</div>
-
-<script src="script.js"></script>
+  <button id="btn-top" title="Voltar ao topo">⬆</button>
 
 
+  <script src="script.js"></script>
 
+  <!-- Lógica da Roleta e ordem correta do Checkout -->
+  <script>
+    /* =========================================================
+       ROLETA DA SORTE - ALEX LANCHES
+       As faixas de valor são regras internas e NÃO aparecem
+       para o cliente. O cliente vê apenas os possíveis prêmios.
+       ========================================================= */
 
-</body>
-</html>
+    const premiosRoleta = [
+      { id: 'desc1', nome: 'R$ 1,00 de Desconto', minimo: 25, desconto: 1, centro: 0 },
+      { id: 'desc4', nome: 'R$ 4,00 de Desconto', minimo: 50, desconto: 4, centro: 51.428 },
+      { id: 'coca', nome: '1 Latinha de Coca-Cola GRÁTIS', minimo: 75, desconto: 0, brinde: '1 latinha de Coca-Cola', centro: 102.856 },
+      { id: 'meiaFritas', nome: '1 Meia Fritas GRÁTIS', minimo: 100, desconto: 0, brinde: '1 meia fritas', centro: 154.284 },
+      { id: 'desc15', nome: 'R$ 15,00 de Desconto', minimo: 150, desconto: 15, centro: 205.712 },
+      { id: 'desc20', nome: 'R$ 20,00 de Desconto', minimo: 220, desconto: 20, centro: 257.140 },
+      { id: 'naoFoiDessaVez', nome: 'Não foi dessa vez — é na sorte mesmo!', minimo: 25, desconto: 0, centro: 308.568 }
+    ];
+
+    let premioSorteado = null;
+    let roletaJaGirada = false;
+    let roletaEmAndamento = false;
+
+    function numeroBR(valor) {
+      if (typeof valor === 'number') return valor;
+      if (!valor) return 0;
+      let texto = String(valor).replace(/[^0-9,.-]/g, '').trim();
+      if (texto.includes(',')) texto = texto.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(texto);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function obterTotalCarrinho() {
+      const seletores = [
+        '#cart-total','.cart-total-value','.cart-total','#total-carrinho',
+        '#cartTotal','.total-carrinho','.total-value','[data-cart-total]'
+      ];
+
+      for (const seletor of seletores) {
+        const elementos = document.querySelectorAll(seletor);
+        for (const el of elementos) {
+          const v = numeroBR(
+            el.textContent || el.value || el.getAttribute('data-cart-total')
+          );
+          if (v > 0) return v;
+        }
+      }
+
+      const itens = document.querySelector('#cart-items');
+      if (itens) {
+        for (const el of itens.querySelectorAll('*')) {
+          const t = (el.textContent || '').trim();
+          if (/^TOTAL\s*:?/i.test(t)) {
+            const v = numeroBR(t.replace(/^TOTAL\s*:?/i, ''));
+            if (v > 0) return v;
+          }
+        }
+      }
+
+      let soma = 0;
+      document.querySelectorAll(
+        '#cart-items [data-price], .cart-item[data-price], .item-carrinho[data-price]'
+      ).forEach(item => {
+        const p = numeroBR(item.getAttribute('data-price'));
+        const q = numeroBR(
+          item.getAttribute('data-quantity') || item.getAttribute('data-qty')
+        ) || 1;
+        soma += p * q;
+      });
+
+      return soma;
+    }
+
+    /*
+      O cliente nunca recebe esta lista na tela.
+      Ela existe somente para o sorteio interno.
+    */
+    function obterPremiosDisponiveis(total) {
+      return premiosRoleta.filter(premio => total > premio.minimo);
+    }
+
+    function sortearPremio(total) {
+      const disponiveis = obterPremiosDisponiveis(total);
+      if (!disponiveis.length) return null;
+      return disponiveis[Math.floor(Math.random() * disponiveis.length)];
+    }
+
+    function resetarRoleta() {
+      const modal = document.getElementById('modal-roleta');
+      const roleta = document.getElementById('roleta-wheel');
+      const resultado = document.getElementById('resultado-roleta');
+      const botao = document.getElementById('btn-girar-roleta');
+
+      if (modal) modal.style.display = 'none';
+
+      if (roleta) {
+        roleta.style.transition = 'none';
+        roleta.style.transform = 'rotate(0deg)';
+        void roleta.offsetWidth;
+        roleta.style.transition = 'transform 4.8s cubic-bezier(.12,.72,.18,1)';
+      }
+
+      if (resultado) resultado.innerHTML = '';
+
+      if (botao) {
+        botao.disabled = false;
+        botao.textContent = 'Girar Agora!';
+        botao.onclick = executarGiroRoleta;
+      }
+
+      roletaJaGirada = false;
+      roletaEmAndamento = false;
+      premioSorteado = null;
+    }
+
+    function abrirRoleta() {
+      const modal = document.getElementById('modal-roleta');
+      if (!modal) return;
+      resetarRoleta();
+      modal.style.display = 'flex';
+    }
+
+    function fecharModalRoleta() {
+      const modal = document.getElementById('modal-roleta');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function iniciarCheckoutComRoleta() {
+      if (window.__permitirCheckoutOriginal || roletaEmAndamento) return;
+
+      const totalPedido = obterTotalCarrinho();
+
+      /* A participação é liberada somente para pedidos elegíveis. */
+      if (totalPedido <= 25) {
+        enviarPedidoWhatsapp(null);
+        return;
+      }
+
+      /*
+        IMPORTANTE:
+        aqui NÃO sorteamos nada.
+        O prêmio só será escolhido quando o cliente girar a roleta.
+      */
+      window.__totalOriginalRoleta = totalPedido;
+      abrirRoleta();
+    }
+
+    function executarGiroRoleta() {
+      if (roletaEmAndamento) return;
+
+      if (roletaJaGirada) {
+        finalizarComPremio();
+        return;
+      }
+
+      const totalPedido = obterTotalCarrinho();
+
+      /* Sorteio realizado somente no clique do giro. */
+      premioSorteado = sortearPremio(totalPedido);
+
+      if (!premioSorteado) {
+        fecharModalRoleta();
+        enviarPedidoWhatsapp(null);
+        return;
+      }
+
+      const btn = document.getElementById('btn-girar-roleta');
+      const roleta = document.getElementById('roleta-wheel');
+      const resultado = document.getElementById('resultado-roleta');
+
+      if (!btn || !roleta || !resultado) return;
+
+      roletaEmAndamento = true;
+      btn.disabled = true;
+      resultado.innerHTML = '🎰 <strong>Girando...</strong>';
+
+      /*
+        A roleta é montada com o centro de cada setor conhecido.
+        A rotação leva o setor sorteado para o ponteiro no topo.
+      */
+      const voltas = 7;
+      const variacao = (Math.random() * 8) - 4;
+      const rotacaoFinal = (360 * voltas) - premioSorteado.centro + variacao;
+
+      roleta.style.transition = 'transform 4.8s cubic-bezier(.12,.72,.18,1)';
+      roleta.style.transform = `rotate(${rotacaoFinal}deg)`;
+
+      setTimeout(() => {
+        roletaJaGirada = true;
+        roletaEmAndamento = false;
+        btn.disabled = false;
+        btn.textContent = 'Continuar pedido';
+        btn.onclick = finalizarComPremio;
+
+        if (premioSorteado.id === 'naoFoiDessaVez') {
+          resultado.innerHTML = `
+            <div style="margin-top:8px;padding:13px;border-radius:15px;background:rgba(255,255,255,.06);border:1px solid rgba(255,193,7,.28)">
+              <div style="font-size:29px;margin-bottom:4px">😅</div>
+              <strong>Não foi dessa vez!</strong><br>
+              <span style="color:#ffc107;font-size:14px">É na sorte mesmo!</span>
+            </div>`;
+        } else {
+          resultado.innerHTML = `
+            <div style="margin-top:8px;padding:13px;border-radius:15px;background:linear-gradient(135deg,rgba(255,193,7,.16),rgba(255,255,255,.05));border:1px solid rgba(255,193,7,.45)">
+              <div style="font-size:29px;margin-bottom:4px">🎉</div>
+              <strong>Parabéns!</strong><br>
+              <span style="color:#ffc107;font-size:18px;font-weight:950">${premioSorteado.nome}</span>
+            </div>`;
+        }
+      }, 5000);
+    }
+
+    function formatarMoedaBR(valor) {
+      return Number(valor).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+    }
+
+    function aplicarPremioAoCarrinho() {
+      if (!premioSorteado) return;
+
+      const totalOriginal = Number(
+        window.__totalOriginalRoleta || obterTotalCarrinho()
+      );
+
+      let desconto = 0;
+
+      if (premioSorteado.id === 'desc1') desconto = 1;
+      if (premioSorteado.id === 'desc4') desconto = 4;
+      if (premioSorteado.id === 'desc15') desconto = 15;
+      if (premioSorteado.id === 'desc20') desconto = 20;
+
+      const totalFinal = Math.max(0, totalOriginal - desconto);
+
+      window.premioRoletaAplicado = {
+        ...premioSorteado,
+        totalOriginal,
+        desconto,
+        totalFinal
+      };
+
+      let resumo = document.getElementById('resumo-premio-roleta');
+      if (!resumo) {
+        const cartFooter = document.getElementById('cart-footer');
+        if (!cartFooter) return;
+
+        resumo = document.createElement('div');
+        resumo.id = 'resumo-premio-roleta';
+
+        const botao = document.getElementById('checkout-btn');
+        if (botao) cartFooter.insertBefore(resumo, botao);
+        else cartFooter.appendChild(resumo);
+      }
+
+      if (premioSorteado.id === 'naoFoiDessaVez') {
+        resumo.innerHTML = `
+          <div class="premio-resumo-titulo">🎰 Roleta da Sorte</div>
+          <div class="premio-ganho" style="background:#3b2c0b;color:#ffc107">😅 Não foi dessa vez!</div>
+          <div class="premio-linha">
+            <span>Valor do pedido</span>
+            <strong>${formatarMoedaBR(totalOriginal)}</strong>
+          </div>
+          <div class="premio-total">
+            <span>Valor final</span>
+            <strong>${formatarMoedaBR(totalOriginal)}</strong>
+          </div>`;
+      } else if (desconto > 0) {
+        resumo.innerHTML = `
+          <div class="premio-resumo-titulo">🎁 Prêmio da Roleta</div>
+          <div class="premio-ganho">${premioSorteado.nome}</div>
+          <div class="premio-linha">
+            <span>Valor do pedido</span>
+            <strong>${formatarMoedaBR(totalOriginal)}</strong>
+          </div>
+          <div class="premio-linha desconto">
+            <span>Seu desconto</span>
+            <strong>- ${formatarMoedaBR(desconto)}</strong>
+          </div>
+          <div class="premio-total">
+            <span>Valor final</span>
+            <strong>${formatarMoedaBR(totalFinal)}</strong>
+          </div>`;
+      } else {
+        resumo.innerHTML = `
+          <div class="premio-resumo-titulo">🎁 Prêmio da Roleta</div>
+          <div class="premio-ganho">${premioSorteado.nome}</div>
+          <div class="premio-linha">
+            <span>Valor do pedido</span>
+            <strong>${formatarMoedaBR(totalOriginal)}</strong>
+          </div>
+          <div class="premio-total">
+            <span>Valor final</span>
+            <strong>${formatarMoedaBR(totalOriginal)}</strong>
+          </div>`;
+      }
+
+      resumo.style.display = 'block';
+    }
+
+    function finalizarComPremio() {
+      if (!roletaJaGirada || !premioSorteado) return;
+
+      aplicarPremioAoCarrinho();
+      window.premioSorteado = premioSorteado;
+
+      const dadosPremio = window.premioRoletaAplicado || {};
+
+      if (premioSorteado.id === 'naoFoiDessaVez') {
+        window.__mensagemPremioRoleta =
+          `🎰 Roleta da Sorte\n` +
+          `😅 Não foi dessa vez — é na sorte mesmo!\n` +
+          `Valor do pedido: ${formatarMoedaBR(dadosPremio.totalOriginal)}\n`;
+      } else if (dadosPremio.desconto > 0) {
+        window.__mensagemPremioRoleta =
+          `🎉 Prêmio da Roleta da Sorte!\n` +
+          `🎁 ${premioSorteado.nome}\n` +
+          `Valor do pedido: ${formatarMoedaBR(dadosPremio.totalOriginal)}\n` +
+          `Desconto da roleta: -${formatarMoedaBR(dadosPremio.desconto)}\n` +
+          `💰 Valor final com o prêmio: ${formatarMoedaBR(dadosPremio.totalFinal)}\n`;
+      } else {
+        window.__mensagemPremioRoleta =
+          `🎉 Prêmio da Roleta da Sorte!\n` +
+          `🎁 ${premioSorteado.nome}\n` +
+          `Valor do pedido: ${formatarMoedaBR(dadosPremio.totalOriginal)}\n` +
+          `🎁 Brinde incluído no pedido.\n`;
+      }
+
+      window.__permitirCheckoutOriginal = true;
+      fecharModalRoleta();
+
+      setTimeout(() => {
+        try {
+          if (typeof finalizarPedido === 'function') {
+            finalizarPedido(window.premioSorteado);
+          } else {
+            const botaoCheckout = document.getElementById('checkout-btn');
+            if (botaoCheckout) botaoCheckout.click();
+          }
+        } finally {
+          setTimeout(() => {
+            window.__permitirCheckoutOriginal = false;
+          }, 800);
+        }
+      }, 80);
+    }
+
+    function enviarPedidoWhatsapp(premio = null) {
+      if (typeof finalizarPedido === 'function') {
+        finalizarPedido(premio);
+      } else {
+        console.log('Pedido pronto para finalização.', premio);
+      }
+    }
+
+    /* =========================================================
+       INTEGRAÇÃO COM WHATSAPP
+       Acrescenta o prêmio sem apagar os dados do pedido.
+       ========================================================= */
+    (function integrarPremioComWhatsApp() {
+      function ehWhatsApp(url) {
+        return typeof url === 'string' &&
+          /(?:wa\.me|whatsapp\.com|api\.whatsapp)/i.test(url);
+      }
+
+      function adicionarPremioNaUrl(url) {
+        const textoPremio = window.__mensagemPremioRoleta;
+        if (!textoPremio || !ehWhatsApp(url)) return url;
+
+        try {
+          const hashIndex = url.indexOf('#');
+          const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+          let base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+          const match = base.match(/([?&])text=([^&]*)/i);
+          if (!match) return url;
+
+          let textoAtual = '';
+          try {
+            textoAtual = decodeURIComponent(match[2].replace(/\+/g, ' '));
+          } catch (_) {
+            textoAtual = match[2];
+          }
+
+          if (
+            textoAtual.includes('PRÊMIO DA ROLETA') ||
+            textoAtual.includes('Prêmio da Roleta')
+          ) {
+            return url;
+          }
+
+          const novoTexto = textoAtual + '\n\n' + textoPremio;
+          const codificado = encodeURIComponent(novoTexto);
+          const inicioTexto = match.index + match[0].indexOf(match[2]);
+          base =
+            base.slice(0, inicioTexto) +
+            codificado +
+            base.slice(inicioTexto + match[2].length);
+
+          return base + hash;
+        } catch (erro) {
+          console.warn('[Roleta] Erro ao acrescentar prêmio:', erro);
+          return url;
+        }
+      }
+
+      const abrirOriginal = window.open;
+      window.open = function(url, ...args) {
+        return abrirOriginal.call(
+          window,
+          adicionarPremioNaUrl(url),
+          ...args
+        );
+      };
+
+      const clickOriginal = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function(...args) {
+        try {
+          if (ehWhatsApp(this.href)) {
+            this.href = adicionarPremioNaUrl(this.href);
+          }
+        } catch (_) {}
+        return clickOriginal.apply(this, args);
+      };
+
+      const observarLinks = new MutationObserver(() => {
+        document.querySelectorAll(
+          'a[href*="wa.me"], a[href*="whatsapp.com"], a[href*="api.whatsapp"]'
+        ).forEach(link => {
+          try {
+            const novoHref = adicionarPremioNaUrl(link.href);
+            if (novoHref !== link.href) link.href = novoHref;
+          } catch (_) {}
+        });
+      });
+
+      observarLinks.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+    })();
+
+    /* Intercepta o checkout para abrir a roleta antes do WhatsApp. */
+    document.addEventListener('click', function(event) {
+      const botao = event.target.closest('#checkout-btn');
+      if (!botao) return;
+      if (window.__permitirCheckoutOriginal) return;
+
+      const totalPedido = obterTotalCarrinho();
+
+      if (totalPedido <= 25) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      iniciarCheckoutComRoleta();
+    }, true);
+  </script>
 </body>
 </html>
